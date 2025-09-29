@@ -29,6 +29,8 @@ const InvestmentPlans = () => {
     "₹2.1Cr+",
   ];
 
+  const isFormValid = selectedAnnualAmount && perStartupFrom && perStartupTo;
+
   return (
     <div className="max-w-4xl mx-auto p-6 pb-28">
       {/* Header */}
@@ -129,8 +131,13 @@ const InvestmentPlans = () => {
             </button>
             <button
               type="button"
-              className="px-5 py-2 rounded bg-black text-white hover:bg-gray-900 cursor-pointer"
-              onClick={() => navigate("/welcome/public_profile")}
+              disabled={!isFormValid}
+              className={`px-5 py-2 rounded text-white cursor-pointer ${
+                isFormValid
+                  ? "bg-black hover:bg-gray-900"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
+              onClick={() => isFormValid && navigate("/welcome/public_profile")}
             >
               Next
             </button>

@@ -217,8 +217,16 @@ const Interests = () => {
             </button>
             <button
               type="button"
-              className="px-5 py-2 rounded bg-black text-white hover:bg-gray-900 hover:cursor-pointer"
-              onClick={() => navigate("/welcome/investment_plans")}
+              disabled={selectedInterests.size === 0}
+              className={`px-5 py-2 rounded text-white hover:cursor-pointer ${
+                selectedInterests.size > 0
+                  ? "bg-black hover:bg-gray-900"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
+              onClick={() =>
+                selectedInterests.size > 0 &&
+                navigate("/welcome/investment_plans")
+              }
             >
               Next
             </button>

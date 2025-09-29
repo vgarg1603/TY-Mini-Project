@@ -16,6 +16,7 @@ import Interests from "./Pages/Welcome/Interests.jsx";
 import InvestmentPlans from "./Pages/Welcome/InvestmentPlans.jsx";
 import PublicProfile from "./Pages/Welcome/PublicProfile.jsx";
 import Finish from "./Pages/Welcome/Finish.jsx";
+import RaiseMoneyPage from "./Pages/RaiseMoney/RaiseMoneyPage.jsx";
 
 function App() {
   const router = createBrowserRouter([
@@ -72,6 +73,19 @@ function App() {
         <>
           <Navbar />
           <ExplorePage />
+        </>
+      ),
+    },
+    {
+      path: "/raise_money/:startupName",
+      element: <Navigate to="/raise_money/:startupName/overview" replace />,
+    },
+    {
+      path: "/raise_money/:startupName/overview",
+      element: (
+        <>
+          <Navbar />
+          <RaiseMoneyPage />
         </>
       ),
     },
