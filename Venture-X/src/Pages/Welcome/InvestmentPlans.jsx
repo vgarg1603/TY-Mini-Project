@@ -1,11 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../lib/AuthContext.jsx";
+import { getWelcomeData, saveWelcomeProgress } from "../../lib/api.js";
 
 const InvestmentPlans = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedAnnualAmount, setSelectedAnnualAmount] = useState("");
   const [perStartupFrom, setPerStartupFrom] = useState("₹8k");
   const [perStartupTo, setPerStartupTo] = useState("");
+  const saveTimer = useRef(null);
+  const [loaded, setLoaded] = useState(false);
 
   const annualAmounts = [
     "₹8k to ₹1.7L",
@@ -30,6 +35,65 @@ const InvestmentPlans = () => {
   ];
 
   const isFormValid = selectedAnnualAmount && perStartupFrom && perStartupTo;
+
+  // Load
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user?.email) return;
+      try {
+        const data = await getWelcomeData(user.email);
+        if (!data || cancelled) return;
+        setSelectedAnnualAmount(data.annualInvestmentRange || "");
+        setPerStartupFrom(data.investmentPlan?.from || "₹8k");
+        setPerStartupTo(data.investmentPlan?.to || "");
+      } catch (e) {
+        console.warn("Failed to load plans", e);
+      } finally {
+        if (!cancelled) setLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email]);
+
+  // Autosave
+  useEffect(() => {
+    if (!loaded || !user?.email) return;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      try {
+        await saveWelcomeProgress({
+          email: user.email,
+          annualInvestmentRange: selectedAnnualAmount || undefined,
+          investmentPlan: {
+            from: perStartupFrom || undefined,
+            to: perStartupTo || undefined,
+          },
+        });
+      } catch (e) {
+        console.warn("Autosave plans failed", e);
+      }
+    }, 600);
+    return () => clearTimeout(saveTimer.current);
+  }, [selectedAnnualAmount, perStartupFrom, perStartupTo, loaded, user?.email]);
+
+  const persist = async () => {
+    if (!user?.email) return;
+    try {
+      await saveWelcomeProgress({
+        email: user.email,
+        annualInvestmentRange: selectedAnnualAmount || undefined,
+        investmentPlan: {
+          from: perStartupFrom || undefined,
+          to: perStartupTo || undefined,
+        },
+      });
+    } catch (e) {
+      console.warn("Persist plans failed", e);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-6 pb-28">
@@ -117,7 +181,10 @@ const InvestmentPlans = () => {
           <button
             type="button"
             className="text-gray-700 underline underline-offset-2 cursor-pointer"
-            onClick={() => navigate("/welcome/interests")}
+            onClick={async () => {
+              await persist();
+              navigate("/welcome/interests");
+            }}
           >
             Back
           </button>
@@ -125,7 +192,20 @@ const InvestmentPlans = () => {
             <button
               type="button"
               className="px-4 py-2 border rounded hover:bg-gray-50 cursor-pointer"
-              onClick={() => navigate("/welcome/public_profile")}
+              onClick={async () => {
+                await persist();
+                navigate("/explore");
+              }}
+            >
+              Save & Exit
+            </button>
+            <button
+              type="button"
+              className="px-4 py-2 border rounded hover:bg-gray-50 cursor-pointer"
+              onClick={async () => {
+                await persist();
+                navigate("/welcome/public_profile");
+              }}
             >
               Skip
             </button>
@@ -137,7 +217,11 @@ const InvestmentPlans = () => {
                   ? "bg-black hover:bg-gray-900"
                   : "bg-gray-400 cursor-not-allowed"
               }`}
-              onClick={() => isFormValid && navigate("/welcome/public_profile")}
+              onClick={async () => {
+                if (!isFormValid) return;
+                await persist();
+                navigate("/welcome/public_profile");
+              }}
             >
               Next
             </button>

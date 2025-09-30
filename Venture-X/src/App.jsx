@@ -17,6 +17,8 @@ import InvestmentPlans from "./Pages/Welcome/InvestmentPlans.jsx";
 import PublicProfile from "./Pages/Welcome/PublicProfile.jsx";
 import Finish from "./Pages/Welcome/Finish.jsx";
 import RaiseMoneyPage from "./Pages/RaiseMoney/RaiseMoneyPage.jsx";
+import RS_start from "./Pages/RaiseMoney/RS_start.jsx";
+import { ProtectedRoute } from "./lib/AuthContext.jsx";
 
 function App() {
   const router = createBrowserRouter([
@@ -57,7 +59,11 @@ function App() {
     },
     {
       path: "/welcome",
-      element: <WelcomePage />,
+      element: (
+        <ProtectedRoute>
+          <WelcomePage />
+        </ProtectedRoute>
+      ),
       children: [
         { index: true, element: <Navigate to="identity" replace /> },
         { path: "identity", element: <Identity /> },
@@ -77,6 +83,10 @@ function App() {
       ),
     },
     {
+      path: "/raise_money",
+      element: <Navigate to="/raise_money/start" replace />,
+    },
+    {
       path: "/raise_money/:startupName",
       element: <Navigate to="/raise_money/:startupName/overview" replace />,
     },
@@ -86,6 +96,14 @@ function App() {
         <>
           <Navbar />
           <RaiseMoneyPage />
+        </>
+      ),
+    },
+    {
+      path: "/raise_money/start",
+      element: (
+        <>
+          <RS_start />
         </>
       ),
     },

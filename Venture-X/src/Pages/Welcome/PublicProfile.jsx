@@ -1,25 +1,102 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../lib/AuthContext.jsx";
+import {
+  getWelcomeData,
+  saveWelcomeProgress,
+  uploadProfileImage,
+} from "../../lib/api.js";
 
 const PublicProfile = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [bio, setBio] = useState("Avid investor");
   const [linkedinUrl, setLinkedinUrl] = useState("");
   const [profileImage, setProfileImage] = useState(null);
   const maxBioLength = 140;
+  const saveTimer = useRef(null);
+  const [loaded, setLoaded] = useState(false);
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setProfileImage(event.target.result);
-      };
-      reader.readAsDataURL(file);
+    if (!file || !user?.email) return;
+    try {
+      // Convert to base64 Data URL
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // Upload to backend -> ImageKit
+      const { url } = await uploadProfileImage({
+        email: user.email,
+        fileBase64: base64,
+        fileName: file.name,
+      });
+
+      // Update preview to CDN URL
+      if (url) setProfileImage(url);
+    } catch (err) {
+      console.warn("Profile image upload failed", err);
     }
   };
 
   const isFormValid = bio.trim().length > 0;
+
+  // Load existing
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user?.email) return;
+      try {
+        const data = await getWelcomeData(user.email);
+        if (!data || cancelled) return;
+        setBio(data.bio || "");
+        setLinkedinUrl(data.websiteURL || "");
+        if (data.profileURL) setProfileImage(data.profileURL);
+      } catch (e) {
+        console.warn("Failed to load public profile", e);
+      } finally {
+        if (!cancelled) setLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email]);
+
+  // Autosave
+  useEffect(() => {
+    if (!loaded || !user?.email) return;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      try {
+        await saveWelcomeProgress({
+          email: user.email,
+          bio,
+          websiteURL: linkedinUrl,
+        });
+      } catch (e) {
+        console.warn("Autosave public profile failed", e);
+      }
+    }, 600);
+    return () => clearTimeout(saveTimer.current);
+  }, [bio, linkedinUrl, loaded, user?.email]);
+
+  const persist = async () => {
+    if (!user?.email) return;
+    try {
+      await saveWelcomeProgress({
+        email: user.email,
+        bio,
+        websiteURL: linkedinUrl,
+      });
+    } catch (e) {
+      console.warn("Persist public profile failed", e);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-6 pb-28 font-sans">
@@ -116,7 +193,10 @@ const PublicProfile = () => {
           <button
             type="button"
             className="text-gray-700 underline underline-offset-2 curosr-pointer"
-            onClick={() => navigate("/welcome/investment_plans")}
+            onClick={async () => {
+              await persist();
+              navigate("/welcome/investment_plans");
+            }}
           >
             Back
           </button>
@@ -124,7 +204,20 @@ const PublicProfile = () => {
             <button
               type="button"
               className="px-4 py-2 border rounded hover:bg-gray-50 cursor-pointer"
-              onClick={() => navigate("/welcome/finish")}
+              onClick={async () => {
+                await persist();
+                navigate("/explore");
+              }}
+            >
+              Save & Exit
+            </button>
+            <button
+              type="button"
+              className="px-4 py-2 border rounded hover:bg-gray-50 cursor-pointer"
+              onClick={async () => {
+                await persist();
+                navigate("/welcome/finish");
+              }}
             >
               Skip
             </button>
@@ -136,7 +229,11 @@ const PublicProfile = () => {
                   ? "bg-black hover:bg-gray-900"
                   : "bg-gray-400 cursor-not-allowed"
               }`}
-              onClick={() => isFormValid && navigate("/welcome/finish")}
+              onClick={async () => {
+                if (!isFormValid) return;
+                await persist();
+                navigate("/welcome/finish");
+              }}
             >
               Next
             </button>

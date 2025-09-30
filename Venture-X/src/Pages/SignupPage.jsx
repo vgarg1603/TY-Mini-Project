@@ -1,7 +1,76 @@
-import React from 'react'
-import { Link } from 'react-router-dom';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { supabase } from "../lib/supabaseClient.js";
+import { syncUser } from "../lib/api.js";
 
 const SignupPage = () => {
+  const [form, setForm] = useState({ email: "", fullName: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: { fullName: form.fullName },
+          emailRedirectTo: window.location.origin + "/welcome",
+        },
+      });
+      if (signUpError) throw signUpError;
+
+      const supaUser = data.user;
+
+      // Supabase quirk: duplicates may come back as user with empty identities
+      if (
+        supaUser &&
+        Array.isArray(supaUser.identities) &&
+        supaUser.identities.length === 0
+      ) {
+        setError("An account with this email already exists. Please log in.");
+        return;
+      }
+
+      await syncUser({
+        supabaseId: supaUser?.id,
+        email: form.email,
+        fullName: form.fullName,
+      });
+
+      alert(
+        "Signup successful! Please check your email to verify your account."
+      );
+      setForm({ email: "", fullName: "", password: "" });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to sign up");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onGoogleLogin = async () => {
+    setError("");
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin + "/welcome" },
+      });
+    } catch (err) {
+      console.error(err);
+      setError("Google sign-in failed. Please try again.");
+    }
+  };
+
   return (
     <main className="bg-white font-sans">
       {/* Spacer so content isn't cramped under the sticky navbar */}
@@ -11,7 +80,7 @@ const SignupPage = () => {
           <h1 className="text-3xl md:text-4xl text-gray-950">
             Invest in the founders you believe in
           </h1>
-          <h2 className='text-2xl md:text3xl text-gray-900 my-4 font-light font-stretch-115%'>
+          <h2 className="text-2xl md:text3xl text-gray-900 my-4 font-light font-stretch-115%">
             Join over 1 million investors who are funding the future
           </h2>
           <p className="mt-3 font-light text-gray-500 font-stretch-110%">
@@ -34,6 +103,7 @@ const SignupPage = () => {
           <div className="flex justify-center items-center h-full ">
             <button
               type="button"
+              onClick={onGoogleLogin}
               className="w-3/4 inline-flex items-center gap-3 border border-gray-200 rounded-lg px-4 py-3 text-gray-800 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
               aria-label="Continue with Google"
             >
@@ -63,13 +133,15 @@ const SignupPage = () => {
           </div>
 
           {/* Right: Email/password form */}
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-4" onSubmit={onSubmit}>
             <label className="block">
               <span className="sr-only">Email</span>
               <input
                 type="email"
                 name="email"
                 placeholder="Email"
+                value={form.email}
+                onChange={onChange}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                 required
               />
@@ -81,6 +153,8 @@ const SignupPage = () => {
                 type="text"
                 name="fullName"
                 placeholder="Full Name"
+                value={form.fullName}
+                onChange={onChange}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                 required
               />
@@ -92,22 +166,25 @@ const SignupPage = () => {
                 type="password"
                 name="password"
                 placeholder="Password"
+                value={form.password}
+                onChange={onChange}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                 required
               />
             </label>
-
+            {error && <p className="text-red-600 text-sm">{error}</p>}
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg py-3 transition-colors"
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium rounded-lg py-3 transition-colors"
             >
-              Sign Up
+              {loading ? "Signing Up..." : "Sign Up"}
             </button>
           </form>
         </div>
       </section>
     </main>
   );
-}
+};
 
-export default SignupPage
+export default SignupPage;

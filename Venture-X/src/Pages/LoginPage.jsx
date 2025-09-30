@@ -1,6 +1,60 @@
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabaseClient.js";
+import { syncUser } from "../lib/api.js";
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const { data, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email: form.email,
+          password: form.password,
+        });
+      if (signInError) throw signInError;
+
+      const user = data.user;
+      await syncUser({
+        supabaseId: user?.id,
+        email: user?.email || form.email,
+        fullName: user?.user_metadata?.fullName || "",
+      });
+
+      navigate("/welcome", { replace: true });
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to log in");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onGoogleLogin = async () => {
+    setError("");
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin + "/welcome" },
+      });
+    } catch (err) {
+      console.error(err);
+      setError("Google sign-in failed. Please try again.");
+    }
+  };
+
   return (
     <main className="bg-white font-sans">
       {/* Spacer so content isn't cramped under the sticky navbar */}
@@ -30,6 +84,7 @@ const LoginPage = () => {
           <div className="flex justify-center items-center h-full ">
             <button
               type="button"
+              onClick={onGoogleLogin}
               className="w-3/4 inline-flex items-center gap-3 border border-gray-200 rounded-lg px-4 py-3 text-gray-800 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
               aria-label="Continue with Google"
             >
@@ -59,13 +114,15 @@ const LoginPage = () => {
           </div>
 
           {/* Right: Email/password form */}
-          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-4" onSubmit={onSubmit}>
             <label className="block">
               <span className="sr-only">Email</span>
               <input
                 type="email"
                 name="email"
                 placeholder="Email"
+                value={form.email}
+                onChange={onChange}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                 required
               />
@@ -77,16 +134,20 @@ const LoginPage = () => {
                 type="password"
                 name="password"
                 placeholder="Password"
+                value={form.password}
+                onChange={onChange}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                 required
               />
             </label>
 
+            {error && <p className="text-red-600 text-sm">{error}</p>}
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg py-3 transition-colors"
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium rounded-lg py-3 transition-colors"
             >
-              Log in
+              {loading ? "Logging in..." : "Log in"}
             </button>
 
             <div className="text-center">
@@ -100,5 +161,4 @@ const LoginPage = () => {
     </main>
   );
 };
-
 export default LoginPage;

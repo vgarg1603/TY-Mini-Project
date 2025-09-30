@@ -1,8 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../lib/AuthContext.jsx";
+import { getWelcomeData, saveWelcomeProgress } from "../../lib/api.js";
 
 const Identity = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [form, setForm] = useState({
     legalName: "",
     birthday: "",
@@ -11,6 +14,9 @@ const Identity = () => {
     region: "",
     country: "",
   });
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const saveTimer = useRef(null);
 
   const onChange = (key) => (e) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -38,6 +44,105 @@ const Identity = () => {
   }, [form]);
 
   const canProceed = allFilled && isAdult;
+  // Load existing
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user?.email) return;
+      try {
+        const data = await getWelcomeData(user.email);
+        if (!data || cancelled) return;
+        setForm({
+          legalName: data.fullName || "",
+          birthday: data.birthday
+            ? new Date(data.birthday).toISOString().slice(0, 10)
+            : "",
+          address: data.address?.street || "",
+          city: data.address?.city || "",
+          region: data.address?.region || "",
+          country: data.address?.country || "",
+        });
+      } catch (e) {
+        console.warn("Failed to load identity data", e);
+      } finally {
+        if (!cancelled) setLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email]);
+
+  // Auto-save with debounce
+  useEffect(() => {
+    if (!loaded || !user?.email) return;
+    setSaving(true);
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      try {
+        await saveWelcomeProgress({
+          email: user.email,
+          fullName: form.legalName,
+          birthday: form.birthday || null,
+          address: {
+            street: form.address,
+            city: form.city,
+            region: form.region,
+            country: form.country,
+          },
+        });
+      } catch (e) {
+        console.warn("Autosave failed", e);
+      } finally {
+        setSaving(false);
+      }
+    }, 600);
+    return () => clearTimeout(saveTimer.current);
+  }, [form, loaded, user?.email]);
+
+  const handleSaveAndExit = async () => {
+    if (!user?.email) return navigate("/explore");
+    setSaving(true);
+    try {
+      await saveWelcomeProgress({
+        email: user.email,
+        fullName: form.legalName,
+        birthday: form.birthday || null,
+        address: {
+          street: form.address,
+          city: form.city,
+          region: form.region,
+          country: form.country,
+        },
+      });
+    } catch (e) {
+      console.warn("Save & Exit failed (non-blocking)", e);
+    } finally {
+      setSaving(false);
+      navigate("/explore");
+    }
+  };
+
+  const handleNext = async () => {
+    if (!canProceed) return;
+    try {
+      await saveWelcomeProgress({
+        email: user?.email,
+        fullName: form.legalName,
+        birthday: form.birthday || null,
+        address: {
+          street: form.address,
+          city: form.city,
+          region: form.region,
+          country: form.country,
+        },
+      });
+    } catch (e) {
+      console.warn("Proceed save failed (non-blocking)", e);
+    } finally {
+      navigate("/welcome/interests");
+    }
+  };
   return (
     <div className="max-w-3xl mx-auto p-6 pb-28 font-sans">
       {/* Header */}
@@ -185,22 +290,51 @@ const Identity = () => {
           <button
             type="button"
             className="text-gray-700 underline underline-offset-2 hover:cursor-pointer"
-            onClick={() => navigate(-1)}
+            onClick={async () => {
+              try {
+                if (user?.email) {
+                  await saveWelcomeProgress({
+                    email: user.email,
+                    fullName: form.legalName,
+                    birthday: form.birthday || null,
+                    address: {
+                      street: form.address,
+                      city: form.city,
+                      region: form.region,
+                      country: form.country,
+                    },
+                  });
+                }
+              } catch (e) {
+                console.warn("Back save failed (non-blocking)", e);
+              } finally {
+                navigate(-1);
+              }
+            }}
           >
             Back
           </button>
-          <button
-            type="button"
-            disabled={!canProceed}
-            className={`px-5 py-2 rounded text-white hover:cursor-pointer hover:bg-gray-600 ${
-              canProceed
-                ? "bg-black hover:bg-gray-900"
-                : "bg-gray-400 cursor-not-allowed"
-            }`}
-            onClick={() => canProceed && navigate("/welcome/interests")}
-          >
-            Next
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="px-4 py-2 border rounded hover:bg-gray-50 hover:cursor-pointer"
+              onClick={handleSaveAndExit}
+            >
+              Save & Exit{saving ? "…" : ""}
+            </button>
+            <button
+              type="button"
+              disabled={!canProceed}
+              className={`px-5 py-2 rounded text-white hover:cursor-pointer hover:bg-gray-600 ${
+                canProceed
+                  ? "bg-black hover:bg-gray-900"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
+              onClick={handleNext}
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </div>

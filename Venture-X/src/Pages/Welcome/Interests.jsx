@@ -1,12 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../lib/AuthContext.jsx";
+import { getWelcomeData, saveWelcomeProgress } from "../../lib/api.js";
 
 const Interests = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [selectedInterests, setSelectedInterests] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [notifications, setNotifications] = useState(true);
+  const saveTimer = useRef(null);
+  const [loaded, setLoaded] = useState(false);
 
   const allInterests = [
     "SaaS",
@@ -64,6 +69,108 @@ const Interests = () => {
       newSelected.add(interest);
     }
     setSelectedInterests(newSelected);
+  };
+
+  // Load existing
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user?.email) return;
+      try {
+        const data = await getWelcomeData(user.email);
+        if (!data || cancelled) return;
+        setSelectedInterests(
+          new Set(Array.isArray(data.interests) ? data.interests : [])
+        );
+        setNotifications(data.notifyPopularStartups ?? true);
+      } catch (e) {
+        console.warn("Failed to load interests", e);
+      } finally {
+        if (!cancelled) setLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email]);
+
+  // Auto-save
+  useEffect(() => {
+    if (!loaded || !user?.email) return;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      try {
+        await saveWelcomeProgress({
+          email: user.email,
+          interests: Array.from(selectedInterests),
+          notifyPopularStartups: !!notifications,
+        });
+      } catch (e) {
+        console.warn("Autosave interests failed", e);
+      }
+    }, 600);
+    return () => clearTimeout(saveTimer.current);
+  }, [selectedInterests, notifications, loaded, user?.email]);
+
+  const handleSaveExit = async () => {
+    try {
+      if (user?.email) {
+        await saveWelcomeProgress({
+          email: user.email,
+          interests: Array.from(selectedInterests),
+          notifyPopularStartups: !!notifications,
+        });
+      }
+    } catch (e) {
+      console.warn("Save & Exit interests failed", e);
+    } finally {
+      navigate("/explore");
+    }
+  };
+
+  const handleBack = async () => {
+    try {
+      if (user?.email) {
+        await saveWelcomeProgress({
+          email: user.email,
+          interests: Array.from(selectedInterests),
+          notifyPopularStartups: !!notifications,
+        });
+      }
+    } catch (e) {
+      console.warn("Back save failed (non-blocking)", e);
+    } finally {
+      navigate("/welcome/identity");
+    }
+  };
+
+  const handleSkip = async () => {
+    try {
+      if (user?.email) {
+        await saveWelcomeProgress({ email: user.email });
+      }
+    } catch (e) {
+      console.warn("Skip save failed (non-blocking)", e);
+    } finally {
+      navigate("/welcome/investment_plans");
+    }
+  };
+
+  const handleNext = async () => {
+    if (selectedInterests.size === 0) return;
+    try {
+      if (user?.email) {
+        await saveWelcomeProgress({
+          email: user.email,
+          interests: Array.from(selectedInterests),
+          notifyPopularStartups: !!notifications,
+        });
+      }
+    } catch (e) {
+      console.warn("Next save failed (non-blocking)", e);
+    } finally {
+      navigate("/welcome/investment_plans");
+    }
   };
 
   return (
@@ -203,7 +310,7 @@ const Interests = () => {
           <button
             type="button"
             className="text-gray-700 underline underline-offset-2 hover:cursor-pointer"
-            onClick={() => navigate("/welcome/identity")}
+            onClick={handleBack}
           >
             Back
           </button>
@@ -211,7 +318,14 @@ const Interests = () => {
             <button
               type="button"
               className="px-4 py-2 border rounded hover:bg-gray-50 hover:cursor-pointer"
-              onClick={() => navigate("/welcome/investment_plans")}
+              onClick={handleSaveExit}
+            >
+              Save & Exit
+            </button>
+            <button
+              type="button"
+              className="px-4 py-2 border rounded hover:bg-gray-50 hover:cursor-pointer"
+              onClick={handleSkip}
             >
               Skip
             </button>
@@ -223,10 +337,7 @@ const Interests = () => {
                   ? "bg-black hover:bg-gray-900"
                   : "bg-gray-400 cursor-not-allowed"
               }`}
-              onClick={() =>
-                selectedInterests.size > 0 &&
-                navigate("/welcome/investment_plans")
-              }
+              onClick={handleNext}
             >
               Next
             </button>
