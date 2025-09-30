@@ -84,18 +84,33 @@ function App() {
     },
     {
       path: "/raise_money",
-      element: <Navigate to="/raise_money/start" replace />,
+      element: (
+        <>
+          <ProtectedRoute>
+            {" "}
+            <Navigate to="/raise_money/start" replace />
+          </ProtectedRoute>
+        </>
+      ),
     },
     {
       path: "/raise_money/:startupName",
-      element: <Navigate to="/raise_money/:startupName/overview" replace />,
+      element: (
+        <>
+          <ProtectedRoute>
+            <Navigate to="/raise_money/:startupName/overview" replace />
+          </ProtectedRoute>
+        </>
+      ),
     },
     {
       path: "/raise_money/:startupName/overview",
       element: (
         <>
-          <Navbar />
-          <RaiseMoneyPage />
+          <ProtectedRoute>
+            <Navbar />
+            <RaiseMoneyPage />
+          </ProtectedRoute>
         </>
       ),
     },
@@ -103,7 +118,9 @@ function App() {
       path: "/raise_money/start",
       element: (
         <>
-          <RS_start />
+          <ProtectedRoute>
+            <RS_start />
+          </ProtectedRoute>
         </>
       ),
     },

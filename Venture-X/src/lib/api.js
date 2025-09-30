@@ -65,3 +65,57 @@ export async function uploadProfileImage({ email, fileBase64, fileName }) {
     throw new Error(message);
   }
 }
+
+export async function getRaiseStart(userSupaId) {
+  if (!userSupaId) throw new Error("userSupaId is required");
+  try {
+    const { data } = await api.get("/api/raise_money/start", {
+      params: { userSupaId },
+    });
+    return data?.company || null;
+  } catch (err) {
+    const message =
+      err?.response?.data?.error || err?.message || "Failed to fetch company";
+    throw new Error(message);
+  }
+}
+
+export async function saveRaiseStart(payload) {
+  try {
+    const { data } = await api.patch("/api/raise_money/start", payload);
+    return data?.company || null;
+  } catch (err) {
+    const message =
+      err?.response?.data?.error || err?.message || "Failed to save company";
+    throw new Error(message);
+  }
+}
+
+// Returns a safe redirect path for Raise Money click, and associates a new company if missing
+export async function getRaiseMoneyRedirect({ supabaseId }) {
+  if (!supabaseId) throw new Error("supabaseId is required");
+  try {
+    const { data } = await api.get("/api/company/redirect", {
+      params: { supabaseId },
+    });
+    return data?.path || "/raise_money/start";
+  } catch {
+    // fallback to start on any error
+    return "/raise_money/start";
+  }
+}
+
+export async function getCompanyStatus({ supabaseId }) {
+  if (!supabaseId) throw new Error("supabaseId is required");
+  const { data } = await api.get("/api/company/status", {
+    params: { supabaseId },
+  });
+  return data;
+}
+
+export async function saveCompanyDetails(payload) {
+  // expects: { supabaseId, companyName, companyWebsite, location, industries, tags, raiseAlready, raiseWant }
+  if (!payload?.supabaseId) throw new Error("supabaseId is required");
+  const { data } = await api.post("/api/company/save", payload);
+  return data; // { company, startupName }
+}

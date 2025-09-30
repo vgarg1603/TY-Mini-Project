@@ -1,11 +1,16 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../lib/AuthContext.jsx";
-import { getWelcomeData } from "../lib/api.js";
+import {
+  getWelcomeData,
+  getRaiseMoneyRedirect,
+  getCompanyStatus,
+} from "../lib/api.js";
 import { supabase } from "../lib/supabaseClient.js";
 
 const Navbar = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [profileUrl, setProfileUrl] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const menuWrapRef = useRef(null);
@@ -104,12 +109,21 @@ const Navbar = () => {
         <div className="flex items-center gap-4">
           <ul className="hidden sm:flex items-center gap-5 m-0 p-0 list-none text-sm text-gray-700">
             <li>
-              <Link
-                to="/raise_money/start"
+              <button
+                type="button"
                 className="inline-flex items-center gap-1.5 hover:text-black"
+                onClick={async () => {
+                  if (!user) {
+                    navigate("/login");
+                    return;
+                  }
+                  const supabaseId = user.id || user?.user_metadata?.sub;
+                  const path = await getRaiseMoneyRedirect({ supabaseId });
+                  navigate(path);
+                }}
               >
                 Raise Money
-              </Link>
+              </button>
             </li>
             <li>
               <a
@@ -203,11 +217,10 @@ const Navbar = () => {
                 onMouseLeave={scheduleClose}
               >
                 {/* Filtered menu: no VIP, Followers, Activity Feed, Cash, Contact Support */}
-                <MenuItem
-                  label="My Company"
-                  href="#"
-                  icon={<IconBriefcase />}
-                />
+                {/* My Company: only show if user has startupName */}
+                {user && (
+                  <MyCompanyMenuItem user={user} isMenuOpen={menuOpen} />
+                )}
                 <MenuItem label="Portfolio" href="#" icon={<IconPieChart />} />
                 <MenuItem label="Watchlist" href="#" icon={<IconHeart />} />
                 <MenuItem
@@ -406,3 +419,49 @@ const IconLogout = () => (
 );
 
 export default Navbar;
+
+// My Company dynamic menu entry
+function MyCompanyMenuItem({ user, isMenuOpen }) {
+  const navigate = useNavigate();
+  const [visible, setVisible] = useState(false);
+  const [targetPath, setTargetPath] = useState("/raise_money/start");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const supabaseId = user?.id || user?.user_metadata?.sub;
+        if (!supabaseId) return;
+        const status = await getCompanyStatus({ supabaseId });
+        const slug = (status?.startupName || "").trim();
+        const hasStartupName = !!slug;
+        if (!cancelled) setVisible(hasStartupName);
+        // Always go to overview when visible
+        if (!cancelled && hasStartupName) {
+          setTargetPath(`/raise_money/${slug}/overview`);
+        }
+      } catch {
+        if (!cancelled) setVisible(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.user_metadata?.sub, isMenuOpen]);
+
+  if (!visible) return null;
+  return (
+    <button
+      role="menuitem"
+      className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-800 flex items-center gap-3"
+      onClick={() => navigate(targetPath)}
+    >
+      <span className="text-gray-500" aria-hidden="true">
+        <IconBriefcase />
+      </span>
+      <span className="truncate underline-offset-2 hover:underline hover:font-sans">
+        My Company
+      </span>
+    </button>
+  );
+}

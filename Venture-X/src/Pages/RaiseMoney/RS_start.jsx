@@ -1,8 +1,15 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../lib/AuthContext.jsx";
+import {
+  getRaiseStart,
+  saveRaiseStart,
+  getRaiseMoneyRedirect,
+} from "../../lib/api.js";
 
 const RS_start = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Industry options and query for searchable multi-select
   const INDUSTRY_OPTIONS = useMemo(
@@ -309,6 +316,68 @@ const RS_start = () => {
     raiseMore: "",
     industries: [], // array of strings from INDUSTRY_OPTIONS
   });
+  const [lastSavedAt, setLastSavedAt] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Hydrate from backend
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!user?.id) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const company = await getRaiseStart(user.id);
+        if (!mounted) return;
+        if (company) {
+          // Map backend -> UI state
+          const industries = Array.isArray(company.industries)
+            ? company.industries
+            : [];
+          // Split recognized vs unknown for 'Other'
+          const recognized = industries.filter((i) =>
+            INDUSTRY_OPTIONS.includes(i)
+          );
+          const unknowns = industries.filter(
+            (i) => !INDUSTRY_OPTIONS.includes(i)
+          );
+          const otherIndustry = unknowns[0] || "";
+          const uiIndustries = [...recognized];
+          if (otherIndustry) uiIndustries.push("Other");
+
+          setFormState({
+            companyName: company.companyName || "",
+            website: company.companyWebsite || "",
+            location: company.location || "",
+            oneLiner: company.companyOneLiner || "",
+            alreadyRaised:
+              company?.raise?.already !== undefined &&
+              company?.raise?.already !== null
+                ? String(company.raise.already)
+                : "",
+            raiseMore:
+              company?.raise?.want !== undefined &&
+              company?.raise?.want !== null
+                ? String(company.raise.want)
+                : "",
+            industries: uiIndustries,
+            otherIndustry,
+          });
+          setLastSavedAt(new Date());
+        }
+      } catch {
+        // ignore fetch errors for first load
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   // Validation helpers
   const isValidURL = (url) => /^https?:\/\/[^\s]+$/i.test(url);
@@ -340,12 +409,94 @@ const RS_start = () => {
 
   const progress = ((step + 1) / steps.length) * 100;
 
-  const next = () => {
-    if (!stepValid) return;
-    if (step < steps.length - 1) setStep((s) => s + 1);
-    else navigate("/raise_money/overview");
+  // Prepare payload for backend
+  const buildPayload = () => {
+    const { companyName, website, location, oneLiner, industries } = formState;
+    // Transform industries: replace 'Other' with specified text if available
+    let inds = Array.isArray(industries) ? [...industries] : [];
+    if (inds.includes("Other")) {
+      const idx = inds.indexOf("Other");
+      const other = (formState.otherIndustry || "").trim();
+      inds.splice(idx, 1, other || "Other");
+    }
+
+    const payload = {
+      userSupaId: user?.id,
+      companyName,
+      companyWebsite: website,
+      location,
+      industries: inds,
+      companyOneLiner: oneLiner,
+    };
+    // numeric fields
+    const already = Number(formState.alreadyRaised);
+    const want = Number(formState.raiseMore);
+    payload.raise = {
+      already: Number.isNaN(already) ? undefined : already,
+      want: Number.isNaN(want) ? undefined : want,
+    };
+    return payload;
   };
-  const back = () => {
+
+  // Debounced autosave when form changes
+  useEffect(() => {
+    if (!user?.id) return;
+    // Don't autosave while initial load still pending to avoid overwriting
+    if (loading) return;
+    const timer = setTimeout(async () => {
+      try {
+        setSaving(true);
+        await saveRaiseStart(buildPayload());
+        setLastSavedAt(new Date());
+      } catch {
+        // ignore transient autosave errors
+      } finally {
+        setSaving(false);
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formState, user?.id, loading]);
+
+  const next = async () => {
+    if (!stepValid) return;
+    // Persist before navigating
+    if (user?.id) {
+      try {
+        setSaving(true);
+        await saveRaiseStart(buildPayload());
+        setLastSavedAt(new Date());
+      } catch {
+        // proceed even if save fails
+      } finally {
+        setSaving(false);
+      }
+    }
+    if (step < steps.length - 1) setStep((s) => s + 1);
+    else {
+      // After finishing step 3, go to /raise_money/:startupName/overview
+      try {
+        const path = await getRaiseMoneyRedirect({ supabaseId: user.id });
+        navigate(path);
+      } catch {
+        // Fallback if redirect fails
+        navigate("/raise_money/start");
+      }
+    }
+  };
+  const back = async () => {
+    // Persist before going back too
+    if (user?.id) {
+      try {
+        setSaving(true);
+        await saveRaiseStart(buildPayload());
+        setLastSavedAt(new Date());
+      } catch {
+        // ignore
+      } finally {
+        setSaving(false);
+      }
+    }
     if (step > 0) setStep((s) => s - 1);
   };
 
@@ -366,46 +517,56 @@ const RS_start = () => {
             {/* Right panel */}
             <div className="bg-white p-6 md:p-10 md:h-full">
               <div className="max-w-xl mx-auto">
-                {Current.render(formState, setFormState)}
-                {/* Inline validation messages */}
-                {step === 0 && (
-                  <div className="mt-4 text-sm text-red-600 space-y-1">
-                    {(formState.companyName || "").trim().length < 2 && (
-                      <p>Company name is required (min 2 characters).</p>
-                    )}
-                    {(formState.website || "").trim() !== "" &&
-                      !isValidURL(formState.website || "") && (
-                        <p>
-                          Enter a valid website starting with http:// or
-                          https://
-                        </p>
-                      )}
-                    {(formState.location || "").trim().length < 2 && (
-                      <p>Location is required.</p>
-                    )}
-                    {(!Array.isArray(formState.industries) ||
-                      formState.industries.length === 0) && (
-                      <p>Select at least one industry.</p>
-                    )}
+                {loading ? (
+                  <div className="min-h-[30vh] grid place-items-center text-gray-600 text-sm">
+                    Loading...
                   </div>
-                )}
-                {step === 1 && (
-                  <div className="mt-4 text-sm text-red-600">
-                    {!(
-                      wordCount(formState.oneLiner) >= 3 &&
-                      wordCount(formState.oneLiner) <= 7
-                    ) && <p>One-liner should be 3 to 7 words.</p>}
-                  </div>
-                )}
-                {step === 2 && (
-                  <div className="mt-4 text-sm text-red-600 space-y-1">
-                    {!isNumber(formState.alreadyRaised) && (
-                      <p>Enter how much you have already raised (number).</p>
+                ) : (
+                  <>
+                    {Current.render(formState, setFormState)}
+                    {/* Inline validation messages */}
+                    {step === 0 && (
+                      <div className="mt-4 text-sm text-red-600 space-y-1">
+                        {(formState.companyName || "").trim().length < 2 && (
+                          <p>Company name is required (min 2 characters).</p>
+                        )}
+                        {(formState.website || "").trim() !== "" &&
+                          !isValidURL(formState.website || "") && (
+                            <p>
+                              Enter a valid website starting with http:// or
+                              https://
+                            </p>
+                          )}
+                        {(formState.location || "").trim().length < 2 && (
+                          <p>Location is required.</p>
+                        )}
+                        {(!Array.isArray(formState.industries) ||
+                          formState.industries.length === 0) && (
+                          <p>Select at least one industry.</p>
+                        )}
+                      </div>
                     )}
-                    {!isNumber(formState.raiseMore) && (
-                      <p>Enter how much more you want to raise (number).</p>
+                    {step === 1 && (
+                      <div className="mt-4 text-sm text-red-600">
+                        {!(
+                          wordCount(formState.oneLiner) >= 3 &&
+                          wordCount(formState.oneLiner) <= 7
+                        ) && <p>One-liner should be 3 to 7 words.</p>}
+                      </div>
                     )}
-                  </div>
+                    {step === 2 && (
+                      <div className="mt-4 text-sm text-red-600 space-y-1">
+                        {!isNumber(formState.alreadyRaised) && (
+                          <p>
+                            Enter how much you have already raised (number).
+                          </p>
+                        )}
+                        {!isNumber(formState.raiseMore) && (
+                          <p>Enter how much more you want to raise (number).</p>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -427,9 +588,11 @@ const RS_start = () => {
               </span>
               <button
                 onClick={next}
-                disabled={!stepValid}
+                disabled={!stepValid || saving}
                 className={`rounded-md px-4 py-2 text-white ${
-                  stepValid ? "bg-black" : "bg-gray-400 cursor-not-allowed"
+                  stepValid && !saving
+                    ? "bg-black"
+                    : "bg-gray-400 cursor-not-allowed"
                 }`}
               >
                 {step === steps.length - 1 ? "Finish" : "Next"}
@@ -441,6 +604,15 @@ const RS_start = () => {
                   className="h-1 bg-black rounded"
                   style={{ width: `${progress}%` }}
                 />
+              </div>
+              <div className="mt-2 flex items-center justify-end">
+                <span className="text-xs text-gray-500">
+                  {saving
+                    ? "Saving..."
+                    : lastSavedAt
+                    ? `Saved ${lastSavedAt.toLocaleTimeString()}`
+                    : ""}
+                </span>
               </div>
             </div>
           </div>
