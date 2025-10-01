@@ -10,7 +10,7 @@ const Finish = () => {
         <div className="flex-1 max-w-2xl">
           <h1 className="text-4xl font-bold mb-6">Let's start investing</h1>
           <p className="text-xl text-gray-700 mb-8">
-            You are now all set up to invest on Wefunder!
+            You are now all set up to invest on VentureX!
           </p>
           
           <div className="text-sm text-gray-500 leading-relaxed">
