@@ -119,3 +119,21 @@ export async function saveCompanyDetails(payload) {
   const { data } = await api.post("/api/company/save", payload);
   return data; // { company, startupName }
 }
+
+// Upload a company asset (image/video/logo) to ImageKit and persist URL on company document
+export async function uploadCompanyAsset({
+  userSupaId,
+  field,
+  fileBase64,
+  fileName,
+}) {
+  if (!userSupaId) throw new Error("userSupaId is required");
+  if (!fileBase64) throw new Error("fileBase64 is required");
+  const { data } = await api.post("/api/upload/company-asset", {
+    userSupaId,
+    field,
+    fileBase64,
+    fileName,
+  });
+  return data; // { url, field, company }
+}

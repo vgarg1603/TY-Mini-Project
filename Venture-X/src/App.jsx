@@ -19,6 +19,8 @@ import Finish from "./Pages/Welcome/Finish.jsx";
 import RaiseMoneyPage from "./Pages/RaiseMoney/RaiseMoneyPage.jsx";
 import RS_start from "./Pages/RaiseMoney/RS_start.jsx";
 import { ProtectedRoute } from "./lib/AuthContext.jsx";
+import CompanyPage from "./Pages/CompanyPage.jsx";
+import RaiseMoneyEditor from "./Pages/RaiseMoney/RaiseMoneyEditor.jsx";
 
 function App() {
   const router = createBrowserRouter([
@@ -124,6 +126,26 @@ function App() {
         </>
       ),
     },
+    {
+      path: "/raise_money/:startupName/editor",
+      element: (
+        <>
+          <ProtectedRoute>
+            <RaiseMoneyEditor />
+          </ProtectedRoute>
+        </>
+      )
+    },
+    {
+      path: "/company/:companyName",
+      element: (
+        <>
+          <Navbar />
+          <CompanyPage />
+        </>
+      ),
+    },
+    
   ]);
 
   return (

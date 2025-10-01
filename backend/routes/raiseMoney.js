@@ -33,6 +33,16 @@ function buildSet(body) {
     set["raise.want"] = r.want ?? undefined;
     set["raise.already"] = r.already ?? undefined;
   }
+  // Social links
+  if (body.linkedInLink !== undefined) set.linkedInLink = body.linkedInLink;
+  if (body.InstagramLink !== undefined) set.InstagramLink = body.InstagramLink;
+  if (body.YoutubeLink !== undefined) set.YoutubeLink = body.YoutubeLink;
+  // Asset direct URLs (usually set by upload endpoint, but allow manual set)
+  if (body.mainCoverPhoto !== undefined)
+    set.mainCoverPhoto = body.mainCoverPhoto;
+  if (body.mainCoverVideo !== undefined)
+    set.mainCoverVideo = body.mainCoverVideo;
+  if (body.companyLogo !== undefined) set.companyLogo = body.companyLogo;
   return set;
 }
 

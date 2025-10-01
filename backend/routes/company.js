@@ -100,7 +100,7 @@ router.get("/redirect", async (req, res) => {
     return res.json({ path: `/raise_money/${startupName}/overview` });
   } catch (err) {
     console.error("company.redirect error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" }) ;
   }
 });
 

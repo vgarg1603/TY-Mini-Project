@@ -68,7 +68,7 @@ const Navbar = () => {
 
           <ul className="inline-flex items-center gap-8 m-0 p-0 list-none text-gray-700 text-sm">
             <li className="hidden sm:block">
-              <Link to="#" className="hover:text-black">
+              <Link to="/explore" className="hover:text-black">
                 Explore
               </Link>
             </li>

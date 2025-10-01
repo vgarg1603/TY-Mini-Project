@@ -39,9 +39,9 @@ async function start() {
     app.use(
       cors({ origin: process.env.CLIENT_ORIGIN || true, credentials: true })
     );
-    // Increase body size limits to support base64 image uploads
-    app.use(express.json({ limit: "25mb" }));
-    app.use(express.urlencoded({ limit: "25mb", extended: true }));
+    // Increase body size limits to support base64 image/video uploads
+    app.use(express.json({ limit: "100mb" }));
+    app.use(express.urlencoded({ limit: "100mb", extended: true }));
 
     app.get("/", (req, res) => {
       res.send("API is running");
