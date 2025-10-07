@@ -21,6 +21,8 @@ import RS_start from "./Pages/RaiseMoney/RS_start.jsx";
 import { ProtectedRoute } from "./lib/AuthContext.jsx";
 import CompanyPage from "./Pages/CompanyPage.jsx";
 import RaiseMoneyEditor from "./Pages/RaiseMoney/RaiseMoneyEditor.jsx";
+import RaiseMoneyRound from "./Pages/RaiseMoney/RaiseMoneyRound.jsx";
+import RaiseMoneyTeam from "./Pages/RaiseMoney/RaiseMoneyTeam.jsx";
 
 function App() {
   const router = createBrowserRouter([
@@ -131,10 +133,33 @@ function App() {
       element: (
         <>
           <ProtectedRoute>
+            <Navbar />
             <RaiseMoneyEditor />
           </ProtectedRoute>
         </>
-      )
+      ),
+    },
+    {
+      path: "/raise_money/:startupName/investment",
+      element: (
+        <>
+          <ProtectedRoute>
+            <Navbar />
+            <RaiseMoneyRound />
+          </ProtectedRoute>
+        </>
+      ),
+    },
+    {
+      path: "/raise_money/:startupName/team",
+      element: (
+        <>
+          <ProtectedRoute>
+            <Navbar />
+            <RaiseMoneyTeam />
+          </ProtectedRoute>
+        </>
+      ),
     },
     {
       path: "/company/:companyName",
@@ -145,7 +170,6 @@ function App() {
         </>
       ),
     },
-    
   ]);
 
   return (

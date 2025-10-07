@@ -13,8 +13,11 @@ const Identity = () => {
     city: "",
     region: "",
     country: "",
+    GSTin: "",
   });
   const [saving, setSaving] = useState(false);
+  const [gstMessage, setGstMessage] = useState(""); // info or error
+  const [gstVerified, setGstVerified] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const saveTimer = useRef(null);
 
@@ -61,6 +64,7 @@ const Identity = () => {
           city: data.address?.city || "",
           region: data.address?.region || "",
           country: data.address?.country || "",
+          GSTin: data.GSTin || "",
         });
       } catch (e) {
         console.warn("Failed to load identity data", e);
@@ -77,10 +81,11 @@ const Identity = () => {
   useEffect(() => {
     if (!loaded || !user?.email) return;
     setSaving(true);
+    setGstMessage("");
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
       try {
-        await saveWelcomeProgress({
+        const payload = {
           email: user.email,
           fullName: form.legalName,
           birthday: form.birthday || null,
@@ -90,9 +95,29 @@ const Identity = () => {
             region: form.region,
             country: form.country,
           },
-        });
+          GSTin: form.GSTin || undefined,
+        };
+        // Basic client-side GSTIN format pre-check to avoid noisy requests
+        const saved = await saveWelcomeProgress(payload);
+        if (saved?.GSTin) {
+          setGstVerified(!!saved.GSTinVerified);
+          if (saved.GSTinVerified) {
+            setGstMessage("GSTIN verified");
+          } else if (payload.GSTin && !/^[0-9A-Z]{15}$/i.test(payload.GSTin)) {
+            setGstMessage("GSTIN stored but format looks invalid");
+          } else if (payload.GSTin) {
+            setGstMessage("GSTIN saved (verification pending or failed)");
+          } else {
+            setGstMessage("");
+          }
+        } else {
+          setGstVerified(false);
+          setGstMessage("");
+        }
       } catch (e) {
         console.warn("Autosave failed", e);
+        const msg = e?.message || "Failed to save";
+        if (/GSTIN/i.test(msg)) setGstMessage(msg);
       } finally {
         setSaving(false);
       }
@@ -103,8 +128,9 @@ const Identity = () => {
   const handleSaveAndExit = async () => {
     if (!user?.email) return navigate("/explore");
     setSaving(true);
+    setGstMessage("");
     try {
-      await saveWelcomeProgress({
+      const payload = {
         email: user.email,
         fullName: form.legalName,
         birthday: form.birthday || null,
@@ -114,9 +140,21 @@ const Identity = () => {
           region: form.region,
           country: form.country,
         },
-      });
+        GSTin: form.GSTin || undefined,
+      };
+      const saved = await saveWelcomeProgress(payload);
+      if (saved?.GSTin) {
+        setGstVerified(!!saved.GSTinVerified);
+        if (saved.GSTinVerified) setGstMessage("GSTIN verified");
+        else if (payload.GSTin && !/^[0-9A-Z]{15}$/i.test(payload.GSTin))
+          setGstMessage("GSTIN stored but format looks invalid");
+        else if (payload.GSTin)
+          setGstMessage("GSTIN saved (verification pending or failed)");
+      }
     } catch (e) {
       console.warn("Save & Exit failed (non-blocking)", e);
+      const msg = e?.message || "Failed to save";
+      if (/GSTIN/i.test(msg)) setGstMessage(msg);
     } finally {
       setSaving(false);
       navigate("/explore");
@@ -126,7 +164,7 @@ const Identity = () => {
   const handleNext = async () => {
     if (!canProceed) return;
     try {
-      await saveWelcomeProgress({
+      const payload = {
         email: user?.email,
         fullName: form.legalName,
         birthday: form.birthday || null,
@@ -136,9 +174,21 @@ const Identity = () => {
           region: form.region,
           country: form.country,
         },
-      });
+        GSTin: form.GSTin || undefined,
+      };
+      const saved = await saveWelcomeProgress(payload);
+      if (saved?.GSTin) {
+        setGstVerified(!!saved.GSTinVerified);
+        if (saved.GSTinVerified) setGstMessage("GSTIN verified");
+        else if (payload.GSTin && !/^[0-9A-Z]{15}$/i.test(payload.GSTin))
+          setGstMessage("GSTIN stored but format looks invalid");
+        else if (payload.GSTin)
+          setGstMessage("GSTIN saved (verification pending or failed)");
+      }
     } catch (e) {
       console.warn("Proceed save failed (non-blocking)", e);
+      const msg = e?.message || "Failed to save";
+      if (/GSTIN/i.test(msg)) setGstMessage(msg);
     } finally {
       navigate("/welcome/interests");
     }
@@ -281,6 +331,45 @@ const Identity = () => {
               <option>Australia</option>
             </select>
           </div>
+        </div>
+
+        <div className="relative">
+          <input
+            id="GSTin"
+            type="text"
+            placeholder=" "
+            value={form.GSTin}
+            onChange={onChange("GSTin")}
+            className={`peer w-full rounded border px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500 ${
+              gstMessage && /invalid/i.test(gstMessage)
+                ? "border-red-500 focus:ring-red-500"
+                : gstVerified
+                ? "border-green-500 focus:ring-green-500"
+                : ""
+            }`}
+          />
+          <label
+            htmlFor="GSTin"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 bg-white px-1 text-gray-500 transition-all duration-150
+                       peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-base
+                       peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:text-blue-600
+                       peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-xs"
+          >
+            GSTIN no.
+          </label>
+          {gstMessage && (
+            <p
+              className={`mt-1 text-sm ${
+                gstVerified
+                  ? "text-green-600"
+                  : /invalid/i.test(gstMessage)
+                  ? "text-red-600"
+                  : "text-gray-600"
+              }`}
+            >
+              {gstMessage}
+            </p>
+          )}
         </div>
       </form>
 

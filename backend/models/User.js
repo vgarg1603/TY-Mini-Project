@@ -21,6 +21,9 @@ const UserSchema = new Schema(
     profileURL: String,
     bio: String,
     websiteURL: String,
+    // GST Identification Number (India) + verification status
+    GSTin: { type: String },
+    GSTinVerified: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

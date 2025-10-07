@@ -12,13 +12,13 @@ const Stat = ({ value, label, accent = false }) => (
   <div className="text-center">
     <div
       className={
-        "text-4xl sm:text-5xl font-semibold tracking-tight " +
+        "text-6xl sm:text-5xl font-semibold tracking-tight " +
         (accent ? "text-blue-600" : "text-slate-900")
       }
     >
       {value}
     </div>
-    <div className="mt-2 text-slate-500 text-sm sm:text-base">{label}</div>
+    <div className="mt-2 text-slate-500 text-8xl sm:text-base">{label}</div>
   </div>
 );
 
@@ -140,7 +140,7 @@ const LandingPage = () => {
       a: "These are long-term investments. Liquidity events (acquisitions, dividends, or secondary sales) may take years and are not guaranteed.",
     },
   ];
-
+  // Restored idea chips (was previously removed by edits)
   const ideaChips = [
     "🐕 A cure for cancer in dogs",
     "✏️ Increasing media literacy",
@@ -152,27 +152,26 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen ">
       {/* Hero */}
-      <section className="relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center py-16 sm:py-20">
+      <section className="relative bg-landing-hero">
+        <div className="max-w-7xl mx-auto ">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start pb-16 sm:pb-20">
             {/* Left copy */}
-            <div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-slate-900">
-                Invest in
-                <br />
-                <span className="bg-gradient-to-r from-blue-600 via-purple-500 to-pink-400 bg-clip-text text-transparent">
+            <div className="font-sans font-light pt-16 sm:pt-20">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl tracking-tight text-slate-900">
+                Invest in{" "}
+                <span className="bg-gradient-to-r from-[#68BBF1] to-[#88AEF0] bg-clip-text text-transparent">
                   founders
                 </span>
                 <br />
-                <span className="bg-gradient-to-r from-indigo-400 via-blue-500 to-pink-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#C5D4F5] via-[#CAA1BF] to-[#F69B79] bg-clip-text text-transparent">
                   building the future
                 </span>
               </h1>
               <p className="mt-6 text-slate-600 text-base sm:text-lg leading-7 max-w-xl">
                 Get equity and front row seats to the startups and small
-                businesses you love—for as little as $100.
+                businesses you love—for as little as ₹100.
               </p>
 
               <div className="mt-8 flex items-center gap-4">
@@ -191,20 +190,16 @@ const LandingPage = () => {
               </div>
             </div>
 
-            {/* Right cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {companies.map((c, idx) => (
-                <CompanyCard key={idx} {...c} />
-              ))}
-            </div>
+            {/* Right animated marquee */}
+            <AnimatedCompanyMarquee companies={companies} />
           </div>
         </div>
       </section>
 
       {/* Stats + chips */}
-      <section className="bg-slate-50 py-14 sm:py-16">
+      <section className="bg-slate-50 py-14 sm:py-16 text-5xl bg-landing-subHero">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-xs tracking-widest text-slate-500 font-medium">
+          <p className="text-center text-sm tracking-widest text-slate-500 font-medium">
             JOIN OVER 1 MILLION INVESTORS
           </p>
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-10">
@@ -258,112 +253,112 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-300 pt-12 pb-16">
+      <footer className="bg-landing-subHero text-black pt-12 pb-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-10">
             <div>
-              <h3 className="text-slate-100 text-sm font-semibold tracking-wide">
+              <h3 className="text-black text-sm font-semibold tracking-wide">
                 COMPANY
               </h3>
               <ul className="mt-4 space-y-2 text-sm">
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     About
                   </a>
                 </li>
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     Careers
                   </a>
                 </li>
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     Press
                   </a>
                 </li>
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     Blog
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-slate-100 text-sm font-semibold tracking-wide">
+              <h3 className="text-black text-sm font-semibold tracking-wide">
                 INVESTORS
               </h3>
               <ul className="mt-4 space-y-2 text-sm">
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     Why Invest
                   </a>
                 </li>
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     How It Works
                   </a>
                 </li>
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     FAQ
                   </a>
                 </li>
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     Risks
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-slate-100 text-sm font-semibold tracking-wide">
+              <h3 className="text-black text-sm font-semibold tracking-wide">
                 FOUNDERS
               </h3>
               <ul className="mt-4 space-y-2 text-sm">
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     Raise Capital
                   </a>
                 </li>
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     Success Stories
                   </a>
                 </li>
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     Resources
                   </a>
                 </li>
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     Apply
                   </a>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-slate-100 text-sm font-semibold tracking-wide">
+              <h3 className="text-black text-sm font-semibold tracking-wide">
                 LEGAL
               </h3>
               <ul className="mt-4 space-y-2 text-sm">
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     Terms of Service
                   </a>
                 </li>
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     Privacy Policy
                   </a>
                 </li>
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     Risk Disclosures
                   </a>
                 </li>
                 <li>
-                  <a className="hover:text-white" href="#">
+                  <a className="" href="#">
                     Form CRS
                   </a>
                 </li>
@@ -377,3 +372,53 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
+
+// Animated marquee component: two vertical lanes moving in opposite directions with tilt & fade
+function AnimatedCompanyMarquee({ companies = [] }) {
+  // Duplicate list so animation loops seamlessly (translate 0 -> -50%)
+  const loop = [...companies, ...companies];
+
+  const CardMini = ({ c }) => (
+    <div className="rounded-2xl  vx-card-glow ring-1 ring-black/5 w-72 md:w-80 lg:w-[24rem] mb-6 shadow-sm">
+      <div
+        className={`h-56 md:h-60 flex items-center justify-center text-white text-base font-semibold bg-gradient-to-br ${c.gradient} mb-2`}
+      >
+      </div>
+      <div className="px-4 bg-white pb-4 pt-3 text-[12px] text-slate-600 space-y-1 rounded-2xl">
+
+      </div>
+    </div>
+  );
+
+  return (
+    <div
+      className="h-[560px] sm:flex hidden justify-center gap-10"
+      aria-hidden="true"
+    >
+      {/* Lane 1 (scroll up) */}
+      <div className="vx-lane-viewport vx-fade-vertical w-72 md:w-80 lg:w-[24rem] vx-marquee-paused">
+        <div className="px-2">
+          <div className="vx-tilt will-change-transform">
+            <div className="vx-marquee-up">
+              {loop.map((c, i) => (
+                <CardMini key={"up-" + i} c={c} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Lane 2 (scroll down) */}
+      <div className="vx-lane-viewport vx-fade-vertical w-72 md:w-80 lg:w-[24rem] vx-marquee-paused">
+        <div className="px-2">
+          <div className="vx-tilt-alt will-change-transform">
+            <div className="vx-marquee-down">
+              {loop.map((c, i) => (
+                <CardMini key={"down-" + i} c={c} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -28,6 +28,15 @@ function buildSet(body) {
     set.industries = body.industries;
   if (body.companyOneLiner !== undefined)
     set.companyOneLiner = body.companyOneLiner;
+  if (body.companyDescription !== undefined)
+    set.companyDescription = body.companyDescription; // full HTML
+  if (body.round && typeof body.round === "object") {
+    const rd = body.round;
+    if (rd.days !== undefined) set["round.days"] = rd.days;
+    if (rd.target !== undefined) set["round.target"] = rd.target;
+    if (rd.minInvest !== undefined) set["round.minInvest"] = rd.minInvest;
+    if (rd.isLive !== undefined) set["round.isLive"] = rd.isLive;
+  }
   if (body.raise !== undefined) {
     const r = body.raise || {};
     set["raise.want"] = r.want ?? undefined;
@@ -82,4 +91,83 @@ router.patch("/start", async (req, res) => {
   }
 });
 
+// PATCH /api/raise_money/description
+// Body: { userSupaId, companyDescription }
+router.patch("/description", async (req, res) => {
+  try {
+    const { userSupaId, companyDescription } = req.body || {};
+    if (!userSupaId)
+      return res.status(400).json({ error: "userSupaId is required" });
+    const update = { $set: {} };
+    if (companyDescription !== undefined)
+      update.$set.companyDescription = companyDescription;
+    const company = await Company.findOneAndUpdate({ userSupaId }, update, {
+      new: true,
+      upsert: true,
+      setDefaultsOnInsert: true,
+    });
+    return res.json({ companyDescription: company.companyDescription || "" });
+  } catch (err) {
+    console.error("raise_money.description patch error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;
+// PATCH /api/raise_money/team
+// Body: { userSupaId, team: [ { fullName, title, about, workEmail, isFounder, linkedInProfile, profilePicture } ] }
+router.patch("/team", async (req, res) => {
+  try {
+    const { userSupaId, team } = req.body || {};
+    if (!userSupaId)
+      return res.status(400).json({ error: "userSupaId is required" });
+    if (!Array.isArray(team))
+      return res.status(400).json({ error: "team must be an array" });
+    // Minimal shape filtering
+    const cleaned = team.map((m) => ({
+      fullName: m.fullName || "",
+      title: m.title || "",
+      about: m.about || "",
+      workEmail: m.workEmail || "",
+      isFounder: !!m.isFounder,
+      linkedInProfile: m.linkedInProfile || "",
+      profilePicture: m.profilePicture || "",
+    }));
+    const company = await Company.findOneAndUpdate(
+      { userSupaId },
+      { $set: { team: cleaned } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+    return res.json({ team: company.team || [] });
+  } catch (err) {
+    console.error("raise_money.team patch error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+// PATCH /api/raise_money/round
+// Body: { userSupaId, round: { days, target, minInvest, isLive } }
+router.patch("/round", async (req, res) => {
+  try {
+    const { userSupaId, round } = req.body || {};
+    if (!userSupaId)
+      return res.status(400).json({ error: "userSupaId is required" });
+    if (!round || typeof round !== "object")
+      return res.status(400).json({ error: "round object is required" });
+
+    const set = {};
+    if (round.days !== undefined) set["round.days"] = round.days;
+    if (round.target !== undefined) set["round.target"] = round.target;
+    if (round.minInvest !== undefined) set["round.minInvest"] = round.minInvest;
+    if (round.isLive !== undefined) set["round.isLive"] = round.isLive;
+
+    const company = await Company.findOneAndUpdate(
+      { userSupaId },
+      { $set: set },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+    return res.json({ round: company.round || null });
+  } catch (err) {
+    console.error("raise_money.round patch error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});

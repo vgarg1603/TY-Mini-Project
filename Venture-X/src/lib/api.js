@@ -137,3 +137,83 @@ export async function uploadCompanyAsset({
   });
   return data; // { url, field, company }
 }
+
+// Save rich description (HTML) only (autosave usage)
+export async function saveCompanyDescription({
+  userSupaId,
+  companyDescription,
+}) {
+  if (!userSupaId) throw new Error("userSupaId is required");
+  const { data } = await api.patch("/api/raise_money/description", {
+    userSupaId,
+    companyDescription,
+  });
+  return data?.companyDescription || "";
+}
+
+// Update round info
+export async function saveRound({ userSupaId, round }) {
+  if (!userSupaId) throw new Error("userSupaId is required");
+  const { data } = await api.patch("/api/raise_money/round", {
+    userSupaId,
+    round,
+  });
+  return data?.round || null;
+}
+
+// List investments for a company (by userSupaId or startupName)
+export async function getInvestments({ userSupaId, startupName, limit = 50 }) {
+  const params = {};
+  if (userSupaId) params.userSupaId = userSupaId;
+  if (startupName) params.startupName = startupName;
+  params.limit = limit;
+  const { data } = await api.get("/api/investment/list", { params });
+  return data?.investments || [];
+}
+
+// Create an investment (for testing/demo; in real app investor identity would be current user)
+export async function createInvestment({
+  userSupaId,
+  startupName,
+  investorSupaId,
+  investorEmail,
+  amount,
+  note,
+}) {
+  const payload = {
+    userSupaId,
+    startupName,
+    investorSupaId,
+    investorEmail,
+    amount,
+    note,
+  };
+  const { data } = await api.post("/api/investment", payload);
+  return data?.investment || null;
+}
+
+// Save team array
+export async function saveTeam({ userSupaId, team }) {
+  if (!userSupaId) throw new Error("userSupaId is required");
+  const { data } = await api.patch("/api/raise_money/team", {
+    userSupaId,
+    team,
+  });
+  return data?.team || [];
+}
+
+// Upload a team profile image and return its URL
+export async function uploadTeamProfileImage({
+  userSupaId,
+  fileBase64,
+  fileName,
+}) {
+  if (!userSupaId) throw new Error("userSupaId is required");
+  if (!fileBase64) throw new Error("fileBase64 is required");
+  const { data } = await api.post("/api/upload/team-profile", {
+    userSupaId,
+    fileBase64,
+    fileName,
+  });
+  return data?.url;
+}

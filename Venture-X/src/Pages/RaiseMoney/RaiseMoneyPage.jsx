@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/AuthContext.jsx";
 import { api } from "../../lib/api.js";
+import { menuOptions } from "../../assets/data.js";
 
 const RaiseMoneyPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -9,6 +10,7 @@ const RaiseMoneyPage = () => {
   const { startupName: startupNameFromPath } = useParams();
   const location = useLocation();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const NAVBAR_HEIGHT = 80;
 
@@ -208,14 +210,6 @@ const RaiseMoneyPage = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const menuItems = [
-    { name: "Overview" },
-    { name: "Editor" },
-    { name: "Investments" },
-    { name: "Orders" },
-    { name: "Products" },
-  ];
-
   return (
     <div className="min-h-screen bg-gray-100 relative font-sans">
       {/* Hamburger Button */}
@@ -283,7 +277,7 @@ const RaiseMoneyPage = () => {
 
           {/* Menu Items */}
           <nav className="space-y-2">
-            {menuItems.map((item, index) => (
+            {menuOptions.map((item, index) => (
               <button
                 key={index}
                 className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors duration-200 group ${
@@ -293,8 +287,20 @@ const RaiseMoneyPage = () => {
                 }`}
                 onClick={() => {
                   setActiveItem(item.name);
-                  // Placeholder for navigation
-                  console.log(`Navigating to ${item.name}`);
+                  if (item.path) {
+                    const slug =
+                      startupNameFromPath ||
+                      encodeURIComponent(
+                        startupDisplayName
+                          .toLowerCase()
+                          .replace(/[^a-z0-9]+/g, "-")
+                      );
+                    navigate(item.path(slug));
+                  } else {
+                    console.log(
+                      `Navigating to ${item.name} (not yet implemented)`
+                    );
+                  }
                 }}
               >
                 <span className="text-lg mr-3 group-hover:scale-110 transition-transform duration-200">

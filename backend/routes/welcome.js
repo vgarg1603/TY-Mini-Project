@@ -1,5 +1,6 @@
 import express from "express";
 import User from "../models/User.js";
+import axios from "axios";
 
 const router = express.Router();
 
@@ -38,6 +39,7 @@ function buildSet(body) {
   if (body.profileURL !== undefined) set.profileURL = body.profileURL;
   if (body.bio !== undefined) set.bio = body.bio;
   if (body.websiteURL !== undefined) set.websiteURL = body.websiteURL;
+  if (body.GSTin !== undefined) set.GSTin = body.GSTin; // raw value; validate before save
 
   return set;
 }
@@ -65,6 +67,77 @@ router.patch("/", async (req, res) => {
     if (!email) return res.status(400).json({ error: "email is required" });
 
     const set = buildSet(req.body);
+
+    // GSTIN validation & verification (India) - ALWAYS store, mark verified only on success
+    if (Object.prototype.hasOwnProperty.call(set, "GSTin")) {
+      if (!set.GSTin) {
+        // Clearing existing GSTIN
+        set.GSTin = undefined;
+        set.GSTinVerified = false;
+      } else {
+        const raw = String(set.GSTin).trim();
+        const gstin = raw.toUpperCase();
+        const formatValid = /^[0-9A-Z]{15}$/.test(gstin);
+        // Always store normalized GSTIN
+        set.GSTin = gstin;
+        let verified = false;
+        try {
+          const existing = await User.findOne(
+            { email },
+            { GSTin: 1, GSTinVerified: 1 }
+          );
+          const alreadyVerifiedSame =
+            existing && existing.GSTin === gstin && existing.GSTinVerified;
+          if (alreadyVerifiedSame) {
+            verified = true;
+          } else if (formatValid) {
+            // Attempt external verification only if format ok
+            const clientId = process.env.CASHFREE_CLIENT_ID;
+            const clientSecret = process.env.CASHFREE_CLIENT_SECRET;
+            if (clientId && clientSecret) {
+              const base =
+                process.env.CASHFREE_BASE_URL || "https://sandbox.cashfree.com";
+              try {
+                const { data: resp } = await axios.post(
+                  `${base}/verification/gstin`,
+                  { GSTIN: gstin },
+                  {
+                    headers: {
+                      "Content-Type": "application/json",
+                      "x-client-id": clientId,
+                      "x-client-secret": clientSecret,
+                    },
+                    timeout: 10000,
+                  }
+                );
+                const success =
+                  resp?.verification_status === "SUCCESS" ||
+                  resp?.valid === true ||
+                  resp?.status === "SUCCESS";
+                if (success) verified = true;
+              } catch (apiErr) {
+                console.warn(
+                  "GSTIN verification API error (non-blocking)",
+                  apiErr?.response?.data || apiErr.message
+                );
+              }
+            } else {
+              // Missing credentials: skip verification silently
+              console.warn(
+                "GSTIN verification skipped: missing Cashfree credentials"
+              );
+            }
+          }
+        } catch (lookupErr) {
+          console.warn(
+            "GSTIN verification lookup error (non-blocking)",
+            lookupErr
+          );
+        }
+        set.GSTinVerified = verified;
+      }
+    }
+
     const update = { $set: set };
     const options = { new: true, upsert: true, setDefaultsOnInsert: true };
     const user = await User.findOneAndUpdate({ email }, update, options);

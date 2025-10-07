@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { api } from "../lib/api.js";
 
 // Simple utility components used on this page
 const Stat = ({ label, value, helper }) => (
@@ -26,25 +27,46 @@ const CompanyPage = () => {
   const { companyName } = useParams();
   const [termsOpen, setTermsOpen] = useState(false);
 
-  // Temporary mocked data. Replace with API call once backend endpoint exists.
-  const company = useMemo(
-    () => ({
-      title: "A Multi-Drug Breathalyzer for Narcotics Detection & Testing",
-      slug: companyName,
-      coverImage:
-        "https://images.unsplash.com/photo-1551190822-a9333d879b1f?q=80&w=1470&auto=format&fit=crop",
-      raised: 91050,
-      investorsText: "raised from 22+ investors",
-      minInvestment: 100,
-      website: "epinalinc.com",
-      websiteUrl: "https://epinalinc.com",
-      location: "Irvine, CA",
-      founded: 2021,
-      tags: ["Technology", "Biotech", "Repeat Founder"],
-      terms: { type: "Future Equity", note: "$10M valuation cap" },
-    }),
-    [companyName]
-  );
+  const [company, setCompany] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        // For now we query by slug using existing raise_money start endpoint fallback (would be better to add dedicated endpoint)
+        // This assumes slug stored in startupName field.
+        const { data } = await api.get("/api/raise_money/start", {
+          params: { userSupaId: companyName }, // fallback if you later adapt to fetch by slug change here
+        });
+        if (!mounted) return;
+        // The above is not actually correct for public view by slug. TODO: create /api/company/by-slug/:startupName
+        // Mock fallback while proper endpoint not yet built.
+        const fallback = {
+          title: companyName?.replaceAll("-", " ") || "Untitled Company",
+          slug: companyName,
+          coverImage:
+            data?.company?.mainCoverPhoto ||
+            "https://images.unsplash.com/photo-1551190822-a9333d879b1f?q=80&w=1470&auto=format&fit=crop",
+          raised: 0,
+          investorsText: "raised so far",
+          minInvestment: 100,
+          website: data?.company?.companyWebsite || "",
+          websiteUrl: data?.company?.companyWebsite || "",
+          location: data?.company?.location || "",
+          founded: new Date().getFullYear(),
+          tags: data?.company?.industries || [],
+          terms: { type: "Future Equity", note: "$10M valuation cap" },
+          companyDescription: data?.company?.companyDescription || "",
+        };
+        setCompany(fallback);
+      } catch (e) {
+        console.error("Failed to load company", e);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [companyName]);
 
   const currency = (n) =>
     new Intl.NumberFormat("en-US", {
@@ -57,7 +79,7 @@ const CompanyPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Intro heading */}
         <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-          Invest in {company.slug?.replaceAll("-", " ") || "this company"}
+          Invest in {company?.slug?.replaceAll("-", " ") || "this company"}
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-2">
@@ -65,14 +87,14 @@ const CompanyPage = () => {
           <section className="lg:col-span-2">
             <div className="rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm p-6">
               <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
-                {company.title}
+                {company?.title || "Loading..."}
               </h1>
 
               {/* Media */}
               <div className="mt-6">
                 <div className="overflow-hidden rounded-xl">
                   <img
-                    src={company.coverImage}
+                    src={company?.coverImage}
                     alt="Company cover"
                     className="w-full h-auto object-cover aspect-[16/9]"
                     loading="lazy"
@@ -93,7 +115,7 @@ const CompanyPage = () => {
                       rel="noreferrer"
                       className="mt-1 inline-block text-slate-900 hover:text-blue-600 font-medium"
                     >
-                      {company.website}
+                      {company?.website}
                     </a>
                   </div>
                   <div>
@@ -101,7 +123,7 @@ const CompanyPage = () => {
                       Location
                     </p>
                     <p className="mt-1 text-slate-900 font-medium">
-                      {company.location}
+                      {company?.location}
                     </p>
                   </div>
                   <div>
@@ -109,13 +131,13 @@ const CompanyPage = () => {
                       Founded
                     </p>
                     <p className="mt-1 text-slate-900 font-medium">
-                      {company.founded}
+                      {company?.founded}
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-6 flex flex-wrap gap-2">
-                  {company.tags.map((t) => (
+                  {(company?.tags || []).map((t) => (
                     <Chip key={t}>{t}</Chip>
                   ))}
                 </div>
@@ -133,8 +155,8 @@ const CompanyPage = () => {
 
               <div className="mt-4">
                 <Stat
-                  value={currency(company.raised)}
-                  helper={company.investorsText}
+                  value={currency(company?.raised || 0)}
+                  helper={company?.investorsText}
                 />
               </div>
 
@@ -142,7 +164,7 @@ const CompanyPage = () => {
               <div className="mt-6">
                 <p className="text-xs text-slate-500 font-medium">
                   INVEST{" "}
-                  <span className="ml-1">min ${company.minInvestment}</span>
+                  <span className="ml-1">min ${company?.minInvestment}</span>
                 </p>
                 <div className="mt-2 flex">
                   <div className="relative flex-1">
@@ -151,7 +173,7 @@ const CompanyPage = () => {
                     </span>
                     <input
                       type="number"
-                      min={company.minInvestment}
+                      min={company?.minInvestment}
                       placeholder="0"
                       className="w-full rounded-l-lg border border-slate-300 pl-7 pr-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
                     />
@@ -197,9 +219,11 @@ const CompanyPage = () => {
                   className={`${termsOpen ? "block" : "hidden"} mt-3 text-sm`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-600">{company.terms.type}</span>
+                    <span className="text-slate-600">
+                      {company?.terms?.type}
+                    </span>
                     <span className="font-medium text-slate-900">
-                      {company.terms.note}
+                      {company?.terms?.note}
                     </span>
                   </div>
                 </div>
@@ -207,6 +231,15 @@ const CompanyPage = () => {
             </div>
           </aside>
         </div>
+        {/* Description Section */}
+        {company?.companyDescription && (
+          <div className="mt-8 rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm p-6 prose max-w-none">
+            <div
+              className="company-description"
+              dangerouslySetInnerHTML={{ __html: company.companyDescription }}
+            />
+          </div>
+        )}
       </div>
     </main>
   );

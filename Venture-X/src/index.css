@@ -1,2 +1,54 @@
 @import url('https://api.fontshare.com/v2/css?f[]=host-grotesk@400,500,600,700&display=swap');
 @import "tailwindcss";
+
+/* Custom background for landing hero
+	 Requirements: predominantly #FBFAF8 from left/top/bottom areas with a soft wash of #FFE8CF on the right side (top-right downwards).
+	 Technique: Layer a large radial gradient (to localize the warm tone) over a wide linear gradient so that only the far right picks up #FFE8CF while
+	 the rest stays #FBFAF8. Adjust the radial sizing/position if you need more/less warmth. */
+@layer utilities {
+    .bg-landing-subHero {
+        --c-base: #FAFBFB;
+        --c-accent: #F4FEFD;
+        background: 
+			linear-gradient(90deg, var(--c-base) 0%, var(--c-accent) 62%, var(--c-accent) 130%);
+    }
+	.bg-landing-hero {
+		--c-base: #FBFAF8; /* left top, left bottom, center bottom, right bottom */
+		--c-accent: #FFE8CF; /* top right to bottom right tint */
+		background:
+			radial-gradient(140% 120% at 95% 15%, var(--c-accent) 0%, rgba(255,232,207,0.85) 20%, rgba(255,232,207,0.55) 35%, rgba(255,232,207,0.25) 50%, rgba(255,232,207,0) 65%),
+			linear-gradient(90deg, var(--c-base) 0%, var(--c-base) 62%, var(--c-accent) 130%);
+		background-color: var(--c-base); /* solid fallback */
+	}
+
+		/* Vertical marquee animations (up & down) */
+		@keyframes vx-scroll-up {
+			0% { transform: translateY(0); }
+			100% { transform: translateY(-50%); }
+		}
+		@keyframes vx-scroll-down {
+			0% { transform: translateY(-50%); }
+			100% { transform: translateY(0); }
+		}
+
+		.vx-marquee-up { animation: vx-scroll-up 28s linear infinite; }
+		.vx-marquee-down { animation: vx-scroll-down 32s linear infinite; }
+		.vx-marquee-paused:hover .vx-marquee-up,
+		.vx-marquee-paused:hover .vx-marquee-down { animation-play-state: paused; }
+
+		/* Edge fade helper using mask for modern browsers (with fallback overlay handled in markup) */
+		.vx-tilt { transform: rotate(-1deg); }
+		.vx-tilt-alt { transform: rotate(-1deg); }
+		.vx-lane-viewport { position: relative; overflow: hidden; }
+		.vx-fade-overlay:after { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(to bottom, var(--c-base, #FBFAF8) 0%, rgba(251,250,248,0) 8%, rgba(251,250,248,0) 92%, var(--c-base, #FBFAF8) 100%); }
+		/* New explicit vertical fade (top & bottom) subtle ~60px each */
+		.vx-fade-vertical:before,
+		.vx-fade-vertical:after { content:""; position:absolute; left:0; right:0; height:70px; pointer-events:none; z-index:5; }
+		.vx-fade-vertical:before { top:0; background:linear-gradient(to bottom, var(--c-base,#FBFAF8) 0%, rgba(251,250,248,0.85) 35%, rgba(251,250,248,0) 100%); }
+		.vx-fade-vertical:after { bottom:0; background:linear-gradient(to top, var(--c-base,#FBFAF8) 0%, rgba(251,250,248,0.85) 35%, rgba(251,250,248,0) 100%); }
+		.vx-preserve-3d { transform-style: preserve-3d; }
+		.vx-card-glow { box-shadow: 0 2px 4px -1px rgba(0,0,0,0.08), 0 8px 24px -4px rgba(0,0,0,0.06); }
+			@media (prefers-reduced-motion: reduce) {
+				.vx-marquee-up, .vx-marquee-down { animation-duration: 5s; animation-iteration-count: 1; }
+			}
+}

@@ -92,3 +92,31 @@ router.post("/company-asset", async (req, res) => {
     return res.status(500).json({ error: "Failed to upload asset" });
   }
 });
+
+// POST /api/upload/team-profile
+// Body: { userSupaId, fileBase64, fileName }
+router.post("/team-profile", async (req, res) => {
+  try {
+    const { userSupaId, fileBase64, fileName } = req.body || {};
+    if (!userSupaId)
+      return res.status(400).json({ error: "userSupaId is required" });
+    if (!fileBase64)
+      return res.status(400).json({ error: "fileBase64 is required" });
+    const company = await Company.findOne({ userSupaId });
+    if (!company)
+      return res.status(404).json({ error: "Company not found for user" });
+    const folderSafeName = company.startupName || `user_${userSupaId}`;
+    const uploadResponse = await imagekit.upload({
+      file: fileBase64,
+      fileName: fileName || `${folderSafeName}_team_${Date.now()}.jpg`,
+      folder: `/venture-x/companies/${folderSafeName}/team`,
+      useUniqueFileName: true,
+    });
+    return res.json({ url: uploadResponse?.url });
+  } catch (err) {
+    console.error("upload/team-profile error:", err?.message || err);
+    return res
+      .status(500)
+      .json({ error: "Failed to upload team profile image" });
+  }
+});
