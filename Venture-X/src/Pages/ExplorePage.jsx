@@ -1,348 +1,291 @@
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
-
-const Badge = ({ children, color = "sky" }) => {
-  const variants = {
-    sky: "bg-sky-50 text-sky-700 border-sky-100",
-    blue: "bg-blue-50 text-blue-700 border-blue-100",
-    amber: "bg-amber-50 text-amber-800 border-amber-100",
-  };
-  const v = variants[color] || variants.sky;
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium border ${v}`}
-    >
-      {children}
-    </span>
-  );
-};
-
-const Chip = ({ children, icon }) => (
-  <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-700 shadow-sm">
-    {icon}
-    {children}
-  </span>
-);
-
-const Segmented = () => (
-  <div
-    role="tablist"
-    aria-label="View mode"
-    className="flex items-center rounded-lg border border-slate-300 overflow-hidden shadow-sm"
-  >
-    <button
-      role="tab"
-      aria-selected="true"
-      className="px-3.5 py-2 text-sm font-medium bg-slate-900 text-white focus:outline-none focus:ring-2 focus:ring-slate-400"
-    >
-      ▤ Carousel
-    </button>
-    <button
-      role="tab"
-      aria-selected="false"
-      className="px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400"
-    >
-      ▦ Grid
-    </button>
-    <button
-      role="tab"
-      aria-selected="false"
-      className="px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400"
-    >
-      ◉ Map
-    </button>
-  </div>
-);
-
-const FilterButtons = () => (
-  <div className="flex items-center gap-3">
-    <button className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
-      Filters
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        className="text-slate-500"
-      >
-        <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
-    <button className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
-      Popular Searches
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        className="text-slate-500"
-      >
-        <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
-  </div>
-);
-
-const Card = ({ title, subtitle, tag, price, theme }) => (
-  <Link to={'/company/FarmEazy'} className="rounded-xl overflow-hidden bg-white ring-1 ring-slate-200 shadow-sm transition hover:shadow-md hover:-translate-y-0.5">
-    <div className={`relative bg-gradient-to-br ${theme} aspect-[3/2]`}>
-      {tag && (
-        <span className="absolute top-3 left-3 inline-flex items-center gap-2 rounded-full bg-red-500 text-white text-xs font-medium px-2.5 py-1">
-          ⚠️ {tag}
-        </span>
-      )}
-      {price && (
-        <span className="absolute top-3 right-3 inline-flex items-center rounded-full bg-white text-slate-900 text-xs font-semibold px-2.5 py-1 shadow-sm">
-          {price}
-        </span>
-      )}
-    </div>
-    <div className="p-4">
-      <h3 className="text-slate-900 font-semibold">{title}</h3>
-      <p className="mt-1 text-slate-600 text-sm leading-6">{subtitle}</p>
-      <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="h-8 w-8 rounded-full bg-slate-200 inline-block" />
-          <span className="text-slate-500 text-sm">Founder</span>
-        </div>
-        <button
-          className="text-slate-400 hover:text-pink-500"
-          aria-label="like"
-        >
-          ♥
-        </button>
-      </div>
-    </div>
-  </Link>
-);
+import React, { useEffect, useRef, useState } from "react";
+import { getCompanies } from "../lib/api";
 
 const ExplorePage = () => {
-  const categories = useMemo(
-    () => [
-      {
-        label: "Technology",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-slate-400"
-          >
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-          </svg>
-        ),
-      },
-      {
-        label: "Marketplace",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-slate-400"
-          >
-            <path d="M3 9h18l-1 9H4L3 9Z" />
-            <path d="M3 9l2-5h14l2 5" />
-          </svg>
-        ),
-      },
-      {
-        label: "Fintech & Finance",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-slate-400"
-          >
-            <path d="M3 7h18v10H3z" />
-            <path d="M6 12h12" />
-          </svg>
-        ),
-      },
-      {
-        label: "Blockchain & Web3",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-slate-400"
-          >
-            <path d="M6 12l6-9 6 9-6 9-6-9z" />
-          </svg>
-        ),
-      },
-      {
-        label: "B2C",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-slate-400"
-          >
-            <circle cx="8" cy="8" r="3" />
-            <path d="M2 22c0-3.314 2.686-6 6-6" />
-            <circle cx="18" cy="8" r="3" />
-            <path d="M22 22c0-3.314-2.686-6-6-6" />
-          </svg>
-        ),
-      },
-      {
-        label: "B2B",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-slate-400"
-          >
-            <rect x="3" y="8" width="7" height="10" />
-            <rect x="14" y="6" width="7" height="12" />
-          </svg>
-        ),
-      },
-      {
-        label: "Hardware",
-        icon: (
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-slate-400"
-          >
-            <rect x="4" y="4" width="16" height="10" />
-            <path d="M8 18h8" />
-          </svg>
-        ),
-      },
-    ],
-    []
-  );
+  const scrollRef = useRef(null);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [selectedIndustry, setSelectedIndustry] = useState(null);
+  const [companies, setCompanies] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const cards = [
-    {
-      title: "Firesale",
-      subtitle:
-        "Revolutionizing the way musicians sell and buy used instruments",
-      tag: "Almost Fully Funded",
-      price: "$210",
-      theme: "from-rose-300 via-orange-200 to-amber-200",
-    },
-    {
-      title: "SkinBit",
-      subtitle:
-        "AI-powered dermatology platform for early skin cancer detection",
-      tag: "4 Days Left",
-      price: null,
-      theme: "from-teal-300 via-sky-200 to-indigo-200",
-    },
-    {
-      title: "TMA Precision Health",
-      subtitle: "Personalized health solutions using advanced genetic testing",
-      tag: "Almost Fully Funded",
-      price: null,
-      theme: "from-sky-200 via-blue-200 to-indigo-300",
-    },
+  const industries = [
+    { name: "Technology", icon: "💻" },
+    { name: "Pets", icon: "🐾" },
+    { name: "Sports Tech", icon: "🏅" },
+    { name: "Gaming", icon: "🕹️" },
+    { name: "Healthcare", icon: "🧬" },
+    { name: "Blockchain & Web3", icon: "⛓️" },
+    { name: "Science & R&D", icon: "🔬" },
+    { name: "Sports", icon: "⚽" },
+    { name: "Subscription", icon: "🔁" },
+    { name: "Service", icon: "🧰" },
+    { name: "Childcare", icon: "🧒" },
+    { name: "Food & Beverage", icon: "🍽️" },
+    { name: "Clean Tech", icon: "🌿" },
+    { name: "Climate Change", icon: "🌍" },
+    { name: "Brick & Mortar", icon: "🧱" },
+    { name: "Recreation", icon: "🎯" },
+    { name: "Distillery & Vineyards", icon: "🍷" },
+    { name: "Events & Festivals", icon: "🎪" },
+    { name: "Restaurant", icon: "🍜" },
+    { name: "Music", icon: "🎵" },
+    { name: "Film", icon: "🎬" },
   ];
 
-  return (
-    <div className="min-h-screen bg-white">
-      {/* Tabs */}
-      <div className="border-b border-slate-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center gap-3 py-3">
-            <button className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 shadow-sm">
-              Founders
-            </button>
-            <button className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700">
-              Venture Funds <Badge color="blue">Accredited-Only</Badge>
-            </button>
-            <button className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700">
-              Top Investors
-            </button>
-            <button className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700">
-              Research & Reviews <Badge color="amber">New</Badge>
-            </button>
+  const updateScrollable = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const canRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+    setCanScrollRight(canRight);
+  };
+
+  useEffect(() => {
+    updateScrollable();
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => updateScrollable();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", updateScrollable);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", updateScrollable);
+    };
+  }, []);
+
+  // Fetch companies when selectedIndustry changes
+  useEffect(() => {
+    let isMounted = true;
+    async function run() {
+      setLoading(true);
+      setError("");
+      try {
+        const { items } = await getCompanies({
+          industry: selectedIndustry || undefined,
+          limit: 24,
+        });
+        if (isMounted) setCompanies(items || []);
+      } catch (e) {
+        if (isMounted) setError(e?.message || "Failed to load companies");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    run();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedIndustry]);
+
+  const scrollRight = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const amount = Math.floor(el.clientWidth * 0.8);
+    el.scrollBy({ left: amount, behavior: "smooth" });
+  };
+
+  function CompanyCard({ c }) {
+    const videoRef = useRef(null);
+    const hasVideo = !!c.mainCoverVideo;
+    const avatar = c?.team && c.team[0]?.profilePicture;
+
+    const onEnter = () => {
+      if (videoRef.current) {
+        videoRef.current.play().catch(() => {});
+      }
+    };
+    const onLeave = () => {
+      const v = videoRef.current;
+      if (v) {
+        v.pause();
+        try {
+          v.currentTime = 0;
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+
+    return (
+      <div
+        className="group border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition"
+        onMouseEnter={onEnter}
+        onMouseLeave={onLeave}
+      >
+        {/* Media */}
+        <div className="relative w-full pt-[56.25%] bg-gray-100">
+          {c.mainCoverPhoto ? (
+            <img
+              src={c.mainCoverPhoto}
+              alt={c.companyName}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gray-100" />
+          )}
+
+          {hasVideo && (
+            <video
+              ref={videoRef}
+              className="absolute inset-0 h-full w-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              muted
+              loop
+              playsInline
+              preload="none"
+              src={c.mainCoverVideo}
+            />
+          )}
+
+          {/* Avatar overlay - bottom-right */}
+          <div className="absolute bottom-2 right-2">
+            {avatar ? (
+              <img
+                src={avatar}
+                alt="team"
+                className="w-12 h-12 rounded-full ring-2 ring-white object-cover shadow"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-gray-200 ring-2 ring-white" />
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Heading + chips + controls (from image 2) */}
-      <section className="py-8 sm:py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
-            Invest in founders building the future
-          </h1>
-
-          {/* Filters Row */}
-          <div className="mt-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="flex flex-nowrap lg:flex-wrap gap-3 overflow-x-auto lg:overflow-visible -mx-4 px-4 lg:mx-0 lg:px-0 pb-1">
-              {categories.map((c) => (
-                <Chip key={c.label} icon={c.icon}>
-                  {c.label}
-                </Chip>
+        {/* Body */}
+        <div className="p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="font-semibold truncate" title={c.companyName}>
+              {c.companyName}
+            </div>
+          </div>
+          {c.companyOneLiner && (
+            <div className="mt-1 text-sm text-gray-600 line-clamp-2">
+              {c.companyOneLiner}
+            </div>
+          )}
+          {Array.isArray(c.industries) && c.industries.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {c.industries.slice(0, 3).map((tag) => (
+                <span
+                  key={tag}
+                  className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full"
+                >
+                  {tag}
+                </span>
               ))}
             </div>
-            <div className="flex items-center gap-3">
-              <Segmented />
-              <FilterButtons />
-            </div>
-          </div>
+          )}
         </div>
-      </section>
+      </div>
+    );
+  }
 
-      {/* Featured list */}
-      <section className="pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between gap-4">
-            <h2 className="text-2xl font-semibold text-slate-900">
-              VC & Notable Angel Backed
-            </h2>
-            <a
-              href="#"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700"
+  return (
+    <div>
+      <div>
+        <div className="py-6 px-20 bg-blue-50 font-medium">Founders</div>
+        <div className="border-2 border-blue-500 w-fit px-12 mx-16"></div>
+      </div>
+      <div className="px-20 py-10">
+        <span className="font-normal font-stretch-120% text-4xl">
+          Invest in founders building the future
+        </span>
+
+        {/* Industries scroller */}
+        <div className="relative mt-8">
+          <div
+            ref={scrollRef}
+            className="flex gap-6 overflow-x-hidden pb-4 pr-10"
+          >
+            {/* Add an "All" filter */}
+            <button
+              key="__all__"
+              className={`flex flex-col items-center justify-center min-w-[60px] w-20 select-none ${
+                !selectedIndustry ? "" : ""
+              }`}
+              type="button"
+              onClick={() => setSelectedIndustry(null)}
             >
-              See all (38) →
-            </a>
-          </div>
+              <div
+                className={`flex items-center justify-center w-12 h-12 rounded-full border bg-white text-base shadow-sm ${
+                  !selectedIndustry
+                    ? "border-blue-500 ring-2 ring-blue-200"
+                    : "border-gray-300"
+                }`}
+              >
+                <span className="text-sm">All</span>
+              </div>
+              <div className="mt-2 text-center text-xs text-gray-700 leading-tight">
+                All
+              </div>
+            </button>
 
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {cards.map((c) => (
-              <Card key={c.title} {...c} />
+            {industries.map((item) => (
+              <button
+                key={item.name}
+                className="flex flex-col items-center justify-center min-w-[60px] w-20 select-none"
+                type="button"
+                onClick={() => setSelectedIndustry(item.name)}
+              >
+                <div
+                  className={`flex items-center justify-center w-12 h-12 rounded-full bg-white text-3xl shadow-sm border ${
+                    selectedIndustry === item.name
+                      ? "border-blue-500 ring-2 ring-blue-200"
+                      : "border-gray-300"
+                  }`}
+                >
+                  <span aria-hidden>{item.icon}</span>
+                </div>
+                <div className="mt-2 text-center text-xs text-gray-700 leading-tight">
+                  {item.name}
+                </div>
+              </button>
             ))}
           </div>
+
+          {canScrollRight && (
+            <button
+              type="button"
+              onClick={scrollRight}
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-white border border-gray-300 shadow-md rounded-full p-2 hover:bg-gray-50"
+              aria-label="Scroll right"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="w-5 h-5"
+              >
+                <path d="M9.29 6.71a1 1 0 011.42 0l4 4a1 1 0 010 1.42l-4 4a1 1 0 11-1.42-1.42L12.59 12 9.29 8.12a1 1 0 010-1.41z" />
+              </svg>
+            </button>
+          )}
         </div>
-      </section>
+
+        <div className="my-10">
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-semibold">
+              Companies{selectedIndustry ? ` · ${selectedIndustry}` : ""}
+            </span>
+            {loading && <span className="text-sm text-gray-500">Loading…</span>}
+          </div>
+          {error && <div className="mt-3 text-sm text-red-600">{error}</div>}
+          {!loading && !error && (
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {companies.map((c) => (
+                <CompanyCard
+                  key={c._id || c.startupName || c.companyName}
+                  c={c}
+                />
+              ))}
+              {!companies.length && (
+                <div className="col-span-full text-sm text-gray-500">
+                  No companies found.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

@@ -68,7 +68,10 @@ const LoginPage = () => {
             New to Venture X?{" "}
             <Link to="/signup" className="hover:text-blue-400 relative">
               <span className="">Sign up</span>
-              <div className="absolute -bottom-0.5 left-0 border-blue-300 border w-full"></div>
+              <span
+                className="absolute -bottom-0.5 left-0 border-blue-300 border w-full block"
+                aria-hidden="true"
+              ></span>
             </Link>
           </p>
         </div>

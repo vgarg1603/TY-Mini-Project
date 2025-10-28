@@ -87,7 +87,7 @@ const SignupPage = () => {
             Already have an account?{" "}
             <Link to="/login" className="hover:text-blue-400 relative">
               <span className="">Log in</span>
-              <div className="absolute -bottom-0.5 left-0 border-blue-300 border w-full"></div>
+              <span className="absolute -bottom-0.5 left-0 border-blue-300 border w-full"></span>
             </Link>
           </p>
         </div>

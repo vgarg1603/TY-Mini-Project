@@ -217,3 +217,21 @@ export async function uploadTeamProfileImage({
   });
   return data?.url;
 }
+
+// List companies with optional filters
+export async function getCompanies({
+  industry,
+  industries,
+  q,
+  limit = 24,
+  skip = 0,
+} = {}) {
+  const params = { limit, skip };
+  if (industry) params.industry = industry;
+  if (industries && Array.isArray(industries) && industries.length) {
+    params.industries = industries.join(",");
+  }
+  if (q) params.q = q;
+  const { data } = await api.get("/api/company/list", { params });
+  return data; // { items, total, limit, skip }
+}

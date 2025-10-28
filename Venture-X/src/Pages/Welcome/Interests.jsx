@@ -31,7 +31,6 @@ const Interests = () => {
     "Recreation",
     "Distillery & Vineyards",
     "Events & Festivals",
-    "Bars & Clubs",
     "Restaurant",
     "Music",
     "Edtech",

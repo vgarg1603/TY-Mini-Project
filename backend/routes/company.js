@@ -100,7 +100,7 @@ router.get("/redirect", async (req, res) => {
     return res.json({ path: `/raise_money/${startupName}/overview` });
   } catch (err) {
     console.error("company.redirect error:", err);
-    return res.status(500).json({ error: "Internal server error" }) ;
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -148,6 +148,65 @@ router.post("/save", async (req, res) => {
     return res.json({ company, startupName: company.startupName || null });
   } catch (err) {
     console.error("company.save error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// GET /api/company/list
+// Optional query params:
+// - industry: string (single industry)
+// - industries: comma separated list of industries
+// - q: search text for companyName or one liner
+// - limit, skip: pagination
+router.get("/list", async (req, res) => {
+  try {
+    const { industry, industries, q } = req.query || {};
+    const limit = Math.min(parseInt(req.query.limit, 10) || 24, 100);
+    const skip = parseInt(req.query.skip, 10) || 0;
+
+    const query = {};
+
+    const list = [];
+    if (industry) list.push(String(industry));
+    if (industries) {
+      String(industries)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .forEach((s) => list.push(s));
+    }
+    if (list.length) {
+      query.industries = { $in: list };
+    }
+
+    if (q && String(q).trim()) {
+      const regex = new RegExp(String(q).trim(), "i");
+      query.$or = [{ companyName: regex }, { companyOneLiner: regex }];
+    }
+
+    const projection = {
+      companyName: 1,
+      companyOneLiner: 1,
+      industries: 1,
+      companyLogo: 1,
+      mainCoverPhoto: 1,
+      mainCoverVideo: 1,
+      startupName: 1,
+      location: 1,
+      team: { $slice: 1 },
+    };
+
+    const [items, total] = await Promise.all([
+      Company.find(query, projection)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Company.countDocuments(query),
+    ]);
+
+    return res.json({ items, total, limit, skip });
+  } catch (err) {
+    console.error("company.list error:", err);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
