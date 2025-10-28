@@ -235,3 +235,28 @@ export async function getCompanies({
   const { data } = await api.get("/api/company/list", { params });
   return data; // { items, total, limit, skip }
 }
+
+// Watchlist APIs
+export async function getWatchlist({ user_id, supabaseId, email } = {}) {
+  const params = {};
+  if (user_id) params.user_id = user_id;
+  if (supabaseId) params.supabaseId = supabaseId;
+  if (email) params.email = email;
+  const { data } = await api.get("/api/watchlist/list", { params });
+  return data; // { items, companyIds }
+}
+
+export async function toggleWatchlist({
+  user_id,
+  supabaseId,
+  email,
+  companyId,
+}) {
+  if (!companyId) throw new Error("companyId is required");
+  const payload = { companyId };
+  if (user_id) payload.user_id = user_id;
+  if (supabaseId) payload.supabaseId = supabaseId;
+  if (email) payload.email = email;
+  const { data } = await api.post("/api/watchlist/toggle", payload);
+  return data; // { saved }
+}

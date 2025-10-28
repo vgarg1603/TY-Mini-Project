@@ -1,13 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
-import { getCompanies } from "../lib/api";
+import { getCompanies, getWatchlist, toggleWatchlist } from "../lib/api";
+import { useAuth } from "../lib/AuthContext";
 
 const ExplorePage = () => {
   const scrollRef = useRef(null);
+  const { user } = useAuth();
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [selectedIndustry, setSelectedIndustry] = useState(null);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [savedCompanyIds, setSavedCompanyIds] = useState(new Set());
 
   const industries = [
     { name: "Technology", icon: "💻" },
@@ -53,6 +56,30 @@ const ExplorePage = () => {
     };
   }, []);
 
+  // Load watchlist when user changes
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      if (!user) {
+        setSavedCompanyIds(new Set());
+        return;
+      }
+      try {
+        const { companyIds } = await getWatchlist({
+          supabaseId: user.id,
+          email: user.email,
+        });
+        if (mounted) setSavedCompanyIds(new Set(companyIds || []));
+      } catch {
+        // non-blocking
+      }
+    }
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [user]);
+
   // Fetch companies when selectedIndustry changes
   useEffect(() => {
     let isMounted = true;
@@ -65,8 +92,8 @@ const ExplorePage = () => {
           limit: 24,
         });
         if (isMounted) setCompanies(items || []);
-      } catch (e) {
-        if (isMounted) setError(e?.message || "Failed to load companies");
+      } catch (err) {
+        if (isMounted) setError(err?.message || "Failed to load companies");
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -84,10 +111,35 @@ const ExplorePage = () => {
     el.scrollBy({ left: amount, behavior: "smooth" });
   };
 
+  async function onToggleWatch(c) {
+    if (!user) {
+      window.location.href = "/login";
+      return;
+    }
+    const id = String(c._id || c.id);
+    const next = new Set(savedCompanyIds);
+    const isSaved = next.has(id);
+    if (isSaved) next.delete(id);
+    else next.add(id);
+    setSavedCompanyIds(next);
+    try {
+      await toggleWatchlist({
+        supabaseId: user.id,
+        email: user.email,
+        companyId: id,
+      });
+    } catch {
+      // revert on failure
+      const revert = new Set(savedCompanyIds);
+      setSavedCompanyIds(revert);
+    }
+  }
+
   function CompanyCard({ c }) {
     const videoRef = useRef(null);
     const hasVideo = !!c.mainCoverVideo;
     const avatar = c?.team && c.team[0]?.profilePicture;
+    const isSaved = savedCompanyIds.has(String(c._id || c.id));
 
     const onEnter = () => {
       if (videoRef.current) {
@@ -135,6 +187,34 @@ const ExplorePage = () => {
               src={c.mainCoverVideo}
             />
           )}
+
+          {/* Watchlist heart - top-right */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleWatch(c);
+            }}
+            className="absolute top-2 right-2 h-9 w-9 grid place-items-center rounded-full bg-white/90 hover:bg-white shadow border border-gray-200"
+            aria-label={isSaved ? "Remove from watchlist" : "Add to watchlist"}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              className={`h-5 w-5 ${
+                isSaved ? "text-rose-600" : "text-gray-500"
+              }`}
+              fill={isSaved ? "currentColor" : "none"}
+              stroke="currentColor"
+              strokeWidth="1.8"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.099 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+              />
+            </svg>
+          </button>
 
           {/* Avatar overlay - bottom-right */}
           <div className="absolute bottom-2 right-2">
@@ -263,8 +343,8 @@ const ExplorePage = () => {
 
         <div className="my-10">
           <div className="flex items-baseline justify-between">
-            <span className="text-2xl font-semibold">
-              Companies{selectedIndustry ? ` · ${selectedIndustry}` : ""}
+            <span className="text-2xl ">
+              Raising Now{selectedIndustry ? ` · ${selectedIndustry}` : ""}
             </span>
             {loading && <span className="text-sm text-gray-500">Loading…</span>}
           </div>

@@ -7,6 +7,7 @@ import uploadRouter from "./routes/upload.js";
 import raiseMoneyRouter from "./routes/raiseMoney.js";
 import companyRouter from "./routes/company.js";
 import investmentRouter from "./routes/investment.js";
+import watchlistRouter from "./routes/watchlist.js";
 import mongoose from "mongoose";
 
 const app = express();
@@ -54,6 +55,7 @@ async function start() {
     app.use("/api/raise_money", raiseMoneyRouter);
     app.use("/api/company", companyRouter);
     app.use("/api/investment", investmentRouter);
+    app.use("/api/watchlist", watchlistRouter);
 
     app.listen(port, () => {
       console.log(`Example app listening on port ${port}`);
