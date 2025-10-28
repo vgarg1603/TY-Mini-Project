@@ -236,6 +236,17 @@ export async function getCompanies({
   return data; // { items, total, limit, skip }
 }
 
+// Fetch a single company by startupName or id
+export async function getCompany({ startupName, id }) {
+  const params = {};
+  if (startupName) params.startupName = startupName;
+  if (id) params.id = id;
+  if (!params.startupName && !params.id)
+    throw new Error("startupName or id is required");
+  const { data } = await api.get("/api/company/get", { params });
+  return data?.company || null;
+}
+
 // Watchlist APIs
 export async function getWatchlist({ user_id, supabaseId, email } = {}) {
   const params = {};

@@ -1,248 +1,277 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { api } from "../lib/api.js";
+import { createInvestment, getCompany, getInvestments } from "../lib/api";
+import { useAuth } from "../lib/AuthContext";
 
-// Simple utility components used on this page
-const Stat = ({ label, value, helper }) => (
-  <div className="flex flex-col">
-    <span className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-      {value}
-    </span>
-    {helper && (
-      <span className="text-slate-500 text-sm" aria-live="polite">
-        {helper}
-      </span>
-    )}
-    {label && <span className="sr-only">{label}</span>}
-  </div>
-);
+function MediaCarousel({ photo, video, overlayTitle, overlaySubtitle }) {
+  const [index, setIndex] = useState(0); // 0=photo, 1=video
+  const videoRef = useRef(null);
+  const slides = useMemo(() => {
+    const arr = [];
+    if (photo) arr.push({ type: "photo", src: photo });
+    if (video) arr.push({ type: "video", src: video });
+    return arr;
+  }, [photo, video]);
 
-const Chip = ({ children }) => (
-  <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700">
-    {children}
-  </span>
-);
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (slides[index]?.type === "video") {
+      v.play().catch(() => {
+        /* ignore */
+      });
+    } else {
+      v.pause();
+      try {
+        v.currentTime = 0;
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [index, slides]);
 
-const CompanyPage = () => {
+  if (!slides.length)
+    return <div className="aspect-video bg-gray-100 rounded-xl" />;
+
+  return (
+    <div className="relative">
+      <div className="relative aspect-video rounded-xl overflow-hidden bg-black">
+        {slides[index].type === "photo" ? (
+          <img
+            src={slides[index].src}
+            alt="cover"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <video
+            ref={videoRef}
+            src={slides[index].src}
+            className="w-full h-full object-cover"
+            muted
+            loop
+            playsInline
+          />
+        )}
+        {/* Overlay texts */}
+        <div className="absolute inset-x-0 top-0 p-4 sm:p-6 pointer-events-none text-white drop-shadow-md">
+          {overlaySubtitle && (
+            <div className="uppercase tracking-wide text-sm opacity-90">
+              {overlaySubtitle}
+            </div>
+          )}
+          {overlayTitle && (
+            <div className="text-xl sm:text-2xl font-semibold">
+              {overlayTitle}
+            </div>
+          )}
+        </div>
+      </div>
+      {slides.length > 1 && (
+        <div className="mt-2 flex items-center gap-2">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              className={`h-2 w-10 rounded-full ${
+                i === index ? "bg-blue-600" : "bg-gray-300"
+              }`}
+              onClick={() => setIndex(i)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function CompanyPage() {
   const { companyName } = useParams();
-  const [termsOpen, setTermsOpen] = useState(false);
-
+  const { user } = useAuth();
   const [company, setCompany] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [investments, setInvestments] = useState([]);
+  const [amount, setAmount] = useState("");
+  const totalRaised = useMemo(
+    () => investments.reduce((sum, it) => sum + (Number(it.amount) || 0), 0),
+    [investments]
+  );
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
+    async function load() {
       try {
-        // For now we query by slug using existing raise_money start endpoint fallback (would be better to add dedicated endpoint)
-        // This assumes slug stored in startupName field.
-        const { data } = await api.get("/api/raise_money/start", {
-          params: { userSupaId: companyName }, // fallback if you later adapt to fetch by slug change here
+        const c = await getCompany({ startupName: companyName });
+        if (mounted) setCompany(c);
+        const inv = await getInvestments({
+          startupName: companyName,
+          limit: 500,
         });
-        if (!mounted) return;
-        // The above is not actually correct for public view by slug. TODO: create /api/company/by-slug/:startupName
-        // Mock fallback while proper endpoint not yet built.
-        const fallback = {
-          title: companyName?.replaceAll("-", " ") || "Untitled Company",
-          slug: companyName,
-          coverImage:
-            data?.company?.mainCoverPhoto ||
-            "https://images.unsplash.com/photo-1551190822-a9333d879b1f?q=80&w=1470&auto=format&fit=crop",
-          raised: 0,
-          investorsText: "raised so far",
-          minInvestment: 100,
-          website: data?.company?.companyWebsite || "",
-          websiteUrl: data?.company?.companyWebsite || "",
-          location: data?.company?.location || "",
-          founded: new Date().getFullYear(),
-          tags: data?.company?.industries || [],
-          terms: { type: "Future Equity", note: "$10M valuation cap" },
-          companyDescription: data?.company?.companyDescription || "",
-        };
-        setCompany(fallback);
+        if (mounted) setInvestments(inv);
       } catch (e) {
-        console.error("Failed to load company", e);
+        if (mounted) setError(e?.message || "Failed to load company");
+      } finally {
+        if (mounted) setLoading(false);
       }
-    })();
+    }
+    load();
     return () => {
       mounted = false;
     };
   }, [companyName]);
 
-  const currency = (n) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(n);
+  async function onInvest() {
+    const amt = Number(amount);
+    if (!amt || amt <= 0) return;
+    try {
+      await createInvestment({
+        startupName: company?.startupName,
+        investorSupaId: user?.id,
+        investorEmail: user?.email,
+        amount: amt,
+      });
+      const inv = await getInvestments({
+        startupName: company?.startupName,
+        limit: 500,
+      });
+      setInvestments(inv);
+      setAmount("");
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (loading)
+    return (
+      <div className="min-h-[60vh] grid place-items-center text-gray-600">
+        Loading…
+      </div>
+    );
+  if (error)
+    return (
+      <div className="min-h-[60vh] grid place-items-center text-red-600">
+        {error}
+      </div>
+    );
+  if (!company) return null;
 
   return (
-    <main className="min-h-screen bg-[#f8fafc]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Intro heading */}
-        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-          Invest in {company?.slug?.replaceAll("-", " ") || "this company"}
-        </p>
+    <div className="px-6 sm:px-10 py-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left column */}
+        <div className="lg:col-span-8">
+          <MediaCarousel
+            photo={company.mainCoverPhoto}
+            video={company.mainCoverVideo}
+            overlaySubtitle={`INVEST IN ${company.companyName?.toUpperCase()}`}
+            overlayTitle={company.companyOneLiner}
+          />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-2">
-          {/* Left/main content */}
-          <section className="lg:col-span-2">
-            <div className="rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm p-6">
-              <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
-                {company?.title || "Loading..."}
-              </h1>
+          {/* Social links */}
+          <div className="mt-4 flex items-center gap-3 text-blue-600">
+            {company.companyWebsite && (
+              <a
+                href={company.companyWebsite}
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                Website
+              </a>
+            )}
+            {company.linkedInLink && (
+              <a
+                href={company.linkedInLink}
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                LinkedIn
+              </a>
+            )}
+            {company.InstagramLink && (
+              <a
+                href={company.InstagramLink}
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                Instagram
+              </a>
+            )}
+            {company.YoutubeLink && (
+              <a
+                href={company.YoutubeLink}
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                YouTube
+              </a>
+            )}
+          </div>
 
-              {/* Media */}
-              <div className="mt-6">
-                <div className="overflow-hidden rounded-xl">
-                  <img
-                    src={company?.coverImage}
-                    alt="Company cover"
-                    className="w-full h-auto object-cover aspect-[16/9]"
-                    loading="lazy"
-                  />
-                </div>
+          <hr className="my-6" />
+
+          {/* Overview tab (single for now) */}
+          <div className="border-b flex gap-6 text-sm">
+            <button className="px-1 py-3 border-b-2 border-blue-600 text-blue-700 font-medium">
+              Overview
+            </button>
+          </div>
+          <div
+            className="prose max-w-none mt-4"
+            dangerouslySetInnerHTML={{
+              __html: company.companyDescription || "",
+            }}
+          />
+        </div>
+
+        {/* Right column - Invest panel */}
+        <div className="lg:col-span-4">
+          <div className="sticky top-4 space-y-4">
+            <div className="border rounded-xl p-4 bg-white shadow-sm">
+              <div className="text-3xl font-semibold">
+                ₹{totalRaised.toLocaleString("en-IN")}
               </div>
-
-              {/* Info row */}
-              <div className="mt-8 border-t border-slate-200 pt-6">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-slate-500">
-                      Website
-                    </p>
-                    <a
-                      href={company.websiteUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-1 inline-block text-slate-900 hover:text-blue-600 font-medium"
-                    >
-                      {company?.website}
-                    </a>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-slate-500">
-                      Location
-                    </p>
-                    <p className="mt-1 text-slate-900 font-medium">
-                      {company?.location}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-slate-500">
-                      Founded
-                    </p>
-                    <p className="mt-1 text-slate-900 font-medium">
-                      {company?.founded}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {(company?.tags || []).map((t) => (
-                    <Chip key={t}>{t}</Chip>
-                  ))}
-                </div>
+              <div className="text-sm text-gray-600">
+                raised from {investments.length}+ investors
               </div>
             </div>
-          </section>
 
-          {/* Right sidebar */}
-          <aside className="lg:col-span-1">
-            <div className="rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm p-6 sticky top-4">
-              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium px-2.5 py-1">
-                🍀 FIRST GOAL HIT{" "}
-                <span className="hidden sm:inline">(You can still invest)</span>
-              </div>
-
-              <div className="mt-4">
-                <Stat
-                  value={currency(company?.raised || 0)}
-                  helper={company?.investorsText}
+            <div className="border rounded-xl p-4 bg-white shadow-sm">
+              <div className="text-sm text-gray-700 mb-2">INVEST</div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">₹</span>
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring"
+                  placeholder="0"
+                  min="0"
                 />
               </div>
-
-              {/* Invest form */}
-              <div className="mt-6">
-                <p className="text-xs text-slate-500 font-medium">
-                  INVEST{" "}
-                  <span className="ml-1">min ${company?.minInvestment}</span>
-                </p>
-                <div className="mt-2 flex">
-                  <div className="relative flex-1">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 select-none">
-                      $
-                    </span>
-                    <input
-                      type="number"
-                      min={company?.minInvestment}
-                      placeholder="0"
-                      className="w-full rounded-l-lg border border-slate-300 pl-7 pr-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400"
-                    />
-                  </div>
-                  <button className="rounded-r-lg bg-rose-500 text-white px-5 py-2 font-semibold hover:bg-rose-600">
-                    INVEST
-                  </button>
-                </div>
-
-                <button className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                  ♥ WATCH FOR UPDATES
-                </button>
-              </div>
-
-              {/* Investment terms */}
-              <div className="mt-6 border-t border-slate-200 pt-4">
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-between text-sm font-semibold text-slate-900"
-                  onClick={() => setTermsOpen((v) => !v)}
-                  aria-expanded={termsOpen}
-                >
-                  <span>INVESTMENT TERMS</span>
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className={`transition-transform ${
-                      termsOpen ? "rotate-180" : "rotate-0"
-                    }`}
-                  >
-                    <path
-                      d="M6 9l6 6 6-6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-                <div
-                  className={`${termsOpen ? "block" : "hidden"} mt-3 text-sm`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-600">
-                      {company?.terms?.type}
-                    </span>
-                    <span className="font-medium text-slate-900">
-                      {company?.terms?.note}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <button
+                onClick={onInvest}
+                className="mt-3 w-full bg-rose-600 hover:bg-rose-700 text-white rounded py-2 font-medium"
+              >
+                Invest
+              </button>
             </div>
-          </aside>
-        </div>
-        {/* Description Section */}
-        {company?.companyDescription && (
-          <div className="mt-8 rounded-2xl bg-white ring-1 ring-slate-200 shadow-sm p-6 prose max-w-none">
-            <div
-              className="company-description"
-              dangerouslySetInnerHTML={{ __html: company.companyDescription }}
-            />
-          </div>
-        )}
-      </div>
-    </main>
-  );
-};
 
-export default CompanyPage;
+            {/* Terms placeholder from Investment.js model context */}
+            <div className="border rounded-xl p-4 bg-white shadow-sm">
+              <div className="font-medium mb-2">Investment Terms</div>
+              <ul className="text-sm text-gray-600 list-disc pl-5 space-y-1">
+                <li>Round target: {company?.round?.target || "—"}</li>
+                <li>Minimum investment: {company?.round?.minInvest ?? "—"}</li>
+                <li>Round days: {company?.round?.days ?? "—"}</li>
+                <li>Status: {company?.round?.isLive ? "Live" : "Not live"}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

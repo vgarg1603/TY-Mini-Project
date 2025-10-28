@@ -160,9 +160,14 @@ const ExplorePage = () => {
 
     return (
       <div
-        className="group border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition"
+        className="group border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition cursor-pointer"
         onMouseEnter={onEnter}
         onMouseLeave={onLeave}
+        onClick={() => {
+          const slug = c.startupName || c.companyName;
+          if (slug)
+            window.location.href = `/company/${encodeURIComponent(slug)}`;
+        }}
       >
         {/* Media */}
         <div className="relative w-full pt-[56.25%] bg-gray-100">

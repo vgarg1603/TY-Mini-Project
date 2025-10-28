@@ -152,6 +152,39 @@ router.post("/save", async (req, res) => {
   }
 });
 
+// GET /api/company/get?startupName=... | id=...
+router.get("/get", async (req, res) => {
+  try {
+    const { startupName, id } = req.query || {};
+    const filter = id ? { _id: id } : startupName ? { startupName } : null;
+    if (!filter)
+      return res.status(400).json({ error: "startupName or id is required" });
+    const projection = {
+      companyName: 1,
+      startupName: 1,
+      companyWebsite: 1,
+      location: 1,
+      companyOneLiner: 1,
+      companyDescription: 1,
+      industries: 1,
+      companyLogo: 1,
+      mainCoverPhoto: 1,
+      mainCoverVideo: 1,
+      linkedInLink: 1,
+      InstagramLink: 1,
+      YoutubeLink: 1,
+      round: 1,
+      team: { $slice: 4 },
+    };
+    const company = await Company.findOne(filter, projection).lean();
+    if (!company) return res.status(404).json({ error: "Company not found" });
+    return res.json({ company });
+  } catch (err) {
+    console.error("company.get error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // GET /api/company/list
 // Optional query params:
 // - industry: string (single industry)
