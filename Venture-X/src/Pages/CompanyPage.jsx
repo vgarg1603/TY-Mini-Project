@@ -91,6 +91,7 @@ export default function CompanyPage() {
   const [error, setError] = useState("");
   const [investments, setInvestments] = useState([]);
   const [amount, setAmount] = useState("");
+  const [activeTab, setActiveTab] = useState("overview");
   const totalRaised = useMemo(
     () => investments.reduce((sum, it) => sum + (Number(it.amount) || 0), 0),
     [investments]
@@ -212,18 +213,108 @@ export default function CompanyPage() {
 
           <hr className="my-6" />
 
-          {/* Overview tab (single for now) */}
+          {/* Tabs */}
           <div className="border-b flex gap-6 text-sm">
-            <button className="px-1 py-3 border-b-2 border-blue-600 text-blue-700 font-medium">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`px-1 py-3 font-medium ${
+                activeTab === "overview"
+                  ? "border-b-2 border-blue-600 text-blue-700"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
               Overview
             </button>
+            <button
+              onClick={() => setActiveTab("team")}
+              className={`px-1 py-3 font-medium ${
+                activeTab === "team"
+                  ? "border-b-2 border-blue-600 text-blue-700"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              Team
+            </button>
           </div>
-          <div
-            className="prose max-w-none mt-4"
-            dangerouslySetInnerHTML={{
-              __html: company.companyDescription || "",
-            }}
-          />
+
+          {activeTab === "overview" && (
+            <div
+              className="prose max-w-none mt-4"
+              dangerouslySetInnerHTML={{
+                __html: company.companyDescription || "",
+              }}
+            />
+          )}
+
+          {activeTab === "team" && (
+            <div className="mt-4 space-y-6">
+              {Array.isArray(company.team) && company.team.length > 0 ? (
+                company.team.map((member, idx) => (
+                  <div
+                    key={`${member.fullName || "member"}-${idx}`}
+                    className="bg-white rounded-xl shadow-sm border border-slate-100 p-6"
+                  >
+                    <div className="flex flex-col md:flex-row gap-6">
+                      {/* Picture */}
+                      <div className="flex items-center md:w-48">
+                        <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden ring-2 ring-transparent">
+                          {member.profilePicture ? (
+                            <img
+                              src={member.profilePicture}
+                              alt={member.fullName || "profile"}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {/* Details */}
+                      <div className="flex-1 grid gap-2 md:grid-cols-2">
+                        <div className="md:col-span-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                          <h3 className="text-lg font-semibold text-slate-800">
+                            {member.fullName || "Full Name"}
+                          </h3>
+                          {member.title && (
+                            <span className="text-sm text-slate-500 font-medium">
+                              {member.title}
+                            </span>
+                          )}
+                          {member.isFounder && (
+                            <span className="ml-2 text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                              Founder
+                            </span>
+                          )}
+                        </div>
+
+                        {member.about && (
+                          <div className="md:col-span-2 text-sm text-slate-700 leading-relaxed">
+                            {member.about}
+                          </div>
+                        )}
+
+                        {member.linkedInProfile && (
+                          <div className="md:col-span-2 mt-1">
+                            <a
+                              href={member.linkedInProfile}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-600 underline text-sm"
+                            >
+                              LinkedIn Profile
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-gray-500">
+                  No team members listed yet.
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right column - Invest panel */}

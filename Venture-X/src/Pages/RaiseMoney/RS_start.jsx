@@ -23,7 +23,7 @@ const RS_start = () => {
       "Utilities",
       "Materials",
       "Communication",
-      "RealEstate",
+      "Clean Tech",
       "Agriculture",
       "Construction",
       "Education",

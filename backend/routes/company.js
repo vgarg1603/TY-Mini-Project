@@ -174,7 +174,7 @@ router.get("/get", async (req, res) => {
       InstagramLink: 1,
       YoutubeLink: 1,
       round: 1,
-      team: { $slice: 4 },
+      team: 1,
     };
     const company = await Company.findOne(filter, projection).lean();
     if (!company) return res.status(404).json({ error: "Company not found" });
