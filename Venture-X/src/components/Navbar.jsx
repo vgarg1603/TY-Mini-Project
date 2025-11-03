@@ -50,34 +50,34 @@ const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-gray-200 font-sans font-stretch-110%">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 font-sans font-stretch-110% shadow-sm">
       <nav
-        className="w-full px-4 py-5 flex items-center justify-between gap-4"
+        className="w-full px-6 py-4 flex items-center justify-between gap-4"
         aria-label="Primary"
       >
         {/* Left: Logo + Explore + Search */}
-        <div className="flex items-center gap-7">
-          <Link to="/" className="block" aria-label="Venture X home">
+        <div className="flex items-center gap-8">
+          <Link to="/" className="block transition-transform hover:scale-105" aria-label="Venture X home">
             {/* Served from Vite public/ folder */}
             <img
               src="/VentureXLogo.png"
               alt="Venture X"
-              className="h-7 w-auto"
+              className="h-8 w-auto"
             />
           </Link>
 
-          <ul className="inline-flex items-center gap-8 m-0 p-0 list-none text-gray-700 text-sm">
+          <ul className="inline-flex items-center gap-8 m-0 p-0 list-none text-gray-700 text-sm font-medium">
             <li className="hidden sm:block">
-              <Link to="/explore" className="hover:text-black">
+              <Link to="/explore" className="hover:text-blue-600 transition-colors duration-200">
                 Explore
               </Link>
             </li>
             <li>
               <a
                 href="#"
-                className="flex items-center gap-1.5 hover:text-black"
+                className="flex items-center gap-2 hover:text-blue-600 transition-colors duration-200"
               >
-                <span className="text-gray-700" aria-hidden="true">
+                <span className="text-gray-600" aria-hidden="true">
                   {/* search icon */}
                   <svg
                     width="18"
@@ -106,12 +106,12 @@ const Navbar = () => {
         </div>
 
         {/* Right: Raise Money, Learn | Auth controls */}
-        <div className="flex items-center gap-4">
-          <ul className="hidden sm:flex items-center gap-5 m-0 p-0 list-none text-sm text-gray-700">
+        <div className="flex items-center gap-5">
+          <ul className="hidden sm:flex items-center gap-6 m-0 p-0 list-none text-sm text-gray-700 font-medium">
             <li>
               <button
                 type="button"
-                className="inline-flex items-center gap-1.5 hover:text-black"
+                className="inline-flex items-center gap-1.5 hover:text-blue-600 transition-colors duration-200"
                 onClick={async () => {
                   if (!user) {
                     navigate("/login");
@@ -128,7 +128,7 @@ const Navbar = () => {
             <li>
               <a
                 href="#"
-                className="inline-flex items-center gap-1.5 hover:text-black"
+                className="inline-flex items-center gap-1.5 hover:text-blue-600 transition-colors duration-200"
               >
                 Learn
                 <span className="text-gray-500" aria-hidden="true">
@@ -153,21 +153,21 @@ const Navbar = () => {
           </ul>
 
           <div
-            className="w-px h-6 bg-gray-200"
+            className="w-px h-6 bg-gray-300"
             role="separator"
             aria-orientation="vertical"
           />
 
           {/* If not logged in -> Login/Signup */}
           {!user && (
-            <ul className="flex items-center gap-3 m-0 p-0 list-none text-sm">
+            <ul className="flex items-center gap-4 m-0 p-0 list-none text-sm font-medium">
               <li>
-                <Link to="/login" className="text-gray-700 hover:text-black">
+                <Link to="/login" className="text-gray-700 hover:text-blue-600 transition-colors duration-200">
                   Log in
                 </Link>
               </li>
               <li>
-                <Link to="/signup" className="text-gray-700 hover:text-black">
+                <Link to="/signup" className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg">
                   Sign up
                 </Link>
               </li>
@@ -210,7 +210,7 @@ const Navbar = () => {
 
               <div
                 role="menu"
-                className={`absolute right-0 mt-2 w-64 rounded-xl border border-gray-200 bg-white shadow-xl p-2 z-50 ${
+                className={`absolute right-0 mt-3 w-64 rounded-2xl border-2 border-gray-200 bg-white shadow-2xl p-2 z-50 ${
                   menuOpen ? "block" : "hidden"
                 }`}
                 onMouseEnter={openMenu}
@@ -230,10 +230,10 @@ const Navbar = () => {
                 />
                 <MenuItem label="Account" href="#" icon={<IconGear />} />
                 <MenuItem label="Profile" href="#" avatarUrl={profileUrl} />
-                <div className="my-1 border-t border-gray-100" />
+                <div className="my-2 border-t border-gray-200" />
                 <button
                   role="menuitem"
-                  className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 text-red-600 flex items-center gap-3"
+                  className="w-full text-left px-4 py-3 rounded-xl hover:bg-red-50 text-red-600 flex items-center gap-3 font-medium transition-all duration-150 hover:text-red-700"
                   onClick={async () => {
                     try {
                       await supabase.auth.signOut();
@@ -243,7 +243,7 @@ const Navbar = () => {
                   }}
                 >
                   <IconLogout />
-                  <span className="underline-offset-2 hover:underline hover:font-sans">
+                  <span>
                     Logout
                   </span>
                 </button>
@@ -261,20 +261,20 @@ const MenuItem = ({ label, href = "#", icon = null, avatarUrl = "" }) => (
   <a
     role="menuitem"
     href={href}
-    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-800"
+    className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-blue-50 text-sm text-gray-800 font-medium transition-all duration-150 hover:text-blue-600"
   >
     {avatarUrl ? (
       <img
         src={avatarUrl}
         alt=""
-        className="h-6 w-6 rounded-full object-cover border"
+        className="h-7 w-7 rounded-full object-cover border-2 border-gray-200"
       />
     ) : (
       <span className="text-gray-500" aria-hidden="true">
         {icon}
       </span>
     )}
-    <span className="truncate underline-offset-2 hover:underline hover:font-sans">
+    <span className="truncate">
       {label}
     </span>
   </a>
@@ -453,13 +453,13 @@ function MyCompanyMenuItem({ user, isMenuOpen }) {
   return (
     <button
       role="menuitem"
-      className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 text-sm text-gray-800 flex items-center gap-3"
+      className="w-full text-left px-4 py-3 rounded-xl hover:bg-blue-50 text-sm text-gray-800 font-medium flex items-center gap-3 transition-all duration-150 hover:text-blue-600"
       onClick={() => navigate(targetPath)}
     >
       <span className="text-gray-500" aria-hidden="true">
         <IconBriefcase />
       </span>
-      <span className="truncate underline-offset-2 hover:underline hover:font-sans">
+      <span className="truncate">
         My Company
       </span>
     </button>

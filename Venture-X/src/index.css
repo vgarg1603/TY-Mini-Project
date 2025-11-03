@@ -48,7 +48,28 @@
 		.vx-fade-vertical:after { bottom:0; background:linear-gradient(to top, var(--c-base,#FBFAF8) 0%, rgba(251,250,248,0.85) 35%, rgba(251,250,248,0) 100%); }
 		.vx-preserve-3d { transform-style: preserve-3d; }
 		.vx-card-glow { box-shadow: 0 2px 4px -1px rgba(0,0,0,0.08), 0 8px 24px -4px rgba(0,0,0,0.06); }
-			@media (prefers-reduced-motion: reduce) {
-				.vx-marquee-up, .vx-marquee-down { animation-duration: 5s; animation-iteration-count: 1; }
-			}
+
+		@media (prefers-reduced-motion: reduce) {
+			.vx-marquee-up, .vx-marquee-down { animation-duration: 5s; animation-iteration-count: 1; }
+		}
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+::-webkit-scrollbar-track {
+	background: #f1f1f1;
+	border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #cbd5e1;
+	border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #94a3b8;
 }

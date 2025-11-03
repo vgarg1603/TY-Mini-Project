@@ -160,7 +160,7 @@ const ExplorePage = () => {
 
     return (
       <div
-        className="group border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition cursor-pointer"
+        className="group border-2 border-gray-100 rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-xl hover:border-blue-200 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
         onMouseEnter={onEnter}
         onMouseLeave={onLeave}
         onClick={() => {
@@ -200,13 +200,13 @@ const ExplorePage = () => {
               e.stopPropagation();
               onToggleWatch(c);
             }}
-            className="absolute top-2 right-2 h-9 w-9 grid place-items-center rounded-full bg-white/90 hover:bg-white shadow border border-gray-200"
+            className="absolute top-3 right-3 h-10 w-10 grid place-items-center rounded-full bg-white/95 hover:bg-white shadow-lg border-2 border-gray-100 hover:border-rose-200 transition-all duration-200 hover:scale-110"
             aria-label={isSaved ? "Remove from watchlist" : "Add to watchlist"}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
-              className={`h-5 w-5 ${
+              className={`h-5 w-5 transition-colors ${
                 isSaved ? "text-rose-600" : "text-gray-500"
               }`}
               fill={isSaved ? "currentColor" : "none"}
@@ -222,37 +222,37 @@ const ExplorePage = () => {
           </button>
 
           {/* Avatar overlay - bottom-right */}
-          <div className="absolute bottom-2 right-2">
+          <div className="absolute bottom-3 right-3">
             {avatar ? (
               <img
                 src={avatar}
                 alt="team"
-                className="w-12 h-12 rounded-full ring-2 ring-white object-cover shadow"
+                className="w-14 h-14 rounded-full ring-4 ring-white object-cover shadow-lg"
               />
             ) : (
-              <div className="w-12 h-12 rounded-full bg-gray-200 ring-2 ring-white" />
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 ring-4 ring-white shadow-lg" />
             )}
           </div>
         </div>
 
         {/* Body */}
-        <div className="p-3">
+        <div className="p-4">
           <div className="flex items-center justify-between gap-2">
-            <div className="font-semibold truncate" title={c.companyName}>
+            <h3 className="font-bold text-lg truncate text-slate-900" title={c.companyName}>
               {c.companyName}
-            </div>
+            </h3>
           </div>
           {c.companyOneLiner && (
-            <div className="mt-1 text-sm text-gray-600 line-clamp-2">
+            <p className="mt-2 text-sm text-gray-600 line-clamp-2 leading-relaxed">
               {c.companyOneLiner}
-            </div>
+            </p>
           )}
           {Array.isArray(c.industries) && c.industries.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
+            <div className="mt-3 flex flex-wrap gap-2">
               {c.industries.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
-                  className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full"
+                  className="text-xs bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium"
                 >
                   {tag}
                 </span>
@@ -265,41 +265,43 @@ const ExplorePage = () => {
   }
 
   return (
-    <div>
-      <div>
-        <div className="py-6 px-20 bg-blue-50 font-medium">Founders</div>
-        <div className="border-2 border-blue-500 w-fit px-12 mx-16"></div>
+    <div className="bg-gradient-to-b from-white to-slate-50/50">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50/40">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-8">
+          <div className="flex items-center gap-3">
+            <div className="h-1 w-12 bg-blue-500 rounded-full"></div>
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-blue-600">Founders</h2>
+          </div>
+        </div>
       </div>
-      <div className="px-20 py-10">
-        <span className="font-normal font-stretch-120% text-4xl">
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-12">
+        <h1 className="font-semibold tracking-tight text-4xl sm:text-5xl text-slate-900">
           Invest in founders building the future
-        </span>
+        </h1>
 
         {/* Industries scroller */}
-        <div className="relative mt-8">
+        <div className="relative mt-10">
           <div
             ref={scrollRef}
-            className="flex gap-6 overflow-x-hidden pb-4 pr-10"
+            className="flex gap-8 overflow-x-hidden pb-6 pr-12"
           >
             {/* Add an "All" filter */}
             <button
               key="__all__"
-              className={`flex flex-col items-center justify-center min-w-[60px] w-20 select-none ${
-                !selectedIndustry ? "" : ""
-              }`}
+              className={`flex flex-col items-center justify-center min-w-[70px] w-24 select-none group`}
               type="button"
               onClick={() => setSelectedIndustry(null)}
             >
               <div
-                className={`flex items-center justify-center w-12 h-12 rounded-full border bg-white text-base shadow-sm ${
+                className={`flex items-center justify-center w-16 h-16 rounded-2xl border-2 bg-white text-base shadow-md transition-all duration-200 ${
                   !selectedIndustry
-                    ? "border-blue-500 ring-2 ring-blue-200"
-                    : "border-gray-300"
+                    ? "border-blue-500 ring-4 ring-blue-100 scale-105"
+                    : "border-gray-300 hover:border-gray-400 hover:shadow-lg"
                 }`}
               >
-                <span className="text-sm">All</span>
+                <span className="text-sm font-semibold">All</span>
               </div>
-              <div className="mt-2 text-center text-xs text-gray-700 leading-tight">
+              <div className="mt-3 text-center text-xs text-gray-700 leading-tight font-medium">
                 All
               </div>
             </button>
@@ -307,20 +309,20 @@ const ExplorePage = () => {
             {industries.map((item) => (
               <button
                 key={item.name}
-                className="flex flex-col items-center justify-center min-w-[60px] w-20 select-none"
+                className="flex flex-col items-center justify-center min-w-[70px] w-24 select-none group"
                 type="button"
                 onClick={() => setSelectedIndustry(item.name)}
               >
                 <div
-                  className={`flex items-center justify-center w-12 h-12 rounded-full bg-white text-3xl shadow-sm border ${
+                  className={`flex items-center justify-center w-16 h-16 rounded-2xl bg-white text-3xl shadow-md border-2 transition-all duration-200 ${
                     selectedIndustry === item.name
-                      ? "border-blue-500 ring-2 ring-blue-200"
-                      : "border-gray-300"
+                      ? "border-blue-500 ring-4 ring-blue-100 scale-105"
+                      : "border-gray-300 hover:border-gray-400 hover:shadow-lg"
                   }`}
                 >
                   <span aria-hidden>{item.icon}</span>
                 </div>
-                <div className="mt-2 text-center text-xs text-gray-700 leading-tight">
+                <div className="mt-3 text-center text-xs text-gray-700 leading-tight font-medium">
                   {item.name}
                 </div>
               </button>
@@ -331,14 +333,14 @@ const ExplorePage = () => {
             <button
               type="button"
               onClick={scrollRight}
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-white border border-gray-300 shadow-md rounded-full p-2 hover:bg-gray-50"
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-white border-2 border-gray-300 shadow-lg rounded-full p-3 hover:bg-gray-50 hover:border-blue-500 hover:shadow-xl transition-all duration-200"
               aria-label="Scroll right"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                className="w-5 h-5"
+                className="w-5 h-5 text-gray-700"
               >
                 <path d="M9.29 6.71a1 1 0 011.42 0l4 4a1 1 0 010 1.42l-4 4a1 1 0 11-1.42-1.42L12.59 12 9.29 8.12a1 1 0 010-1.41z" />
               </svg>
@@ -346,16 +348,16 @@ const ExplorePage = () => {
           )}
         </div>
 
-        <div className="my-10">
-          <div className="flex items-baseline justify-between">
-            <span className="text-2xl ">
-              Raising Now{selectedIndustry ? ` · ${selectedIndustry}` : ""}
-            </span>
-            {loading && <span className="text-sm text-gray-500">Loading…</span>}
+        <div className="my-12">
+          <div className="flex items-baseline justify-between mb-2">
+            <h2 className="text-3xl font-semibold text-slate-900">
+              Raising Now{selectedIndustry ? <span className="text-blue-600"> · {selectedIndustry}</span> : ""}
+            </h2>
+            {loading && <span className="text-sm text-gray-500 animate-pulse">Loading…</span>}
           </div>
-          {error && <div className="mt-3 text-sm text-red-600">{error}</div>}
+          {error && <div className="mt-4 text-sm text-red-600 bg-red-50 px-4 py-3 rounded-lg font-medium">{error}</div>}
           {!loading && !error && (
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {companies.map((c) => (
                 <CompanyCard
                   key={c._id || c.startupName || c.companyName}
@@ -363,8 +365,12 @@ const ExplorePage = () => {
                 />
               ))}
               {!companies.length && (
-                <div className="col-span-full text-sm text-gray-500">
-                  No companies found.
+                <div className="col-span-full text-center py-16 text-gray-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  <p className="text-lg font-medium">No companies found</p>
+                  <p className="text-sm mt-1">Try selecting a different industry</p>
                 </div>
               )}
             </div>

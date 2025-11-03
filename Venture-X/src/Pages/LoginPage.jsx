@@ -56,20 +56,20 @@ const LoginPage = () => {
   };
 
   return (
-    <main className="bg-white font-sans">
+    <main className="bg-gradient-to-br from-slate-50 to-blue-50/30 font-sans min-h-screen">
       {/* Spacer so content isn't cramped under the sticky navbar */}
-      <section className="max-w-4xl mx-auto px-4 md:px-6 pt-8 md:pt-12 pb-16">
+      <section className="max-w-5xl mx-auto px-4 md:px-6 pt-12 md:pt-16 pb-20">
         {/* Heading */}
-        <div className="text-center mb-8 md:mb-12">
-          <h1 className="text-3xl md:text-4xl text-gray-900">
+        <div className="text-center mb-10 md:mb-14">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
             Hi! Welcome back!
           </h1>
-          <p className="mt-3 font-light text-gray-500 font-stretch-110%">
+          <p className="mt-4 text-base text-gray-600 font-stretch-110%">
             New to Venture X?{" "}
-            <Link to="/signup" className="hover:text-blue-400 relative">
+            <Link to="/signup" className="text-blue-600 hover:text-blue-700 font-semibold relative group">
               <span className="">Sign up</span>
               <span
-                className="absolute -bottom-0.5 left-0 border-blue-300 border w-full block"
+                className="absolute -bottom-0.5 left-0 border-b-2 border-blue-600 w-full block group-hover:border-blue-700 transition-colors"
                 aria-hidden="true"
               ></span>
             </Link>
@@ -77,10 +77,10 @@ const LoginPage = () => {
         </div>
 
         {/* Content */}
-        <div className="relative grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
+        <div className="relative grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-start bg-white rounded-2xl shadow-xl p-8 md:p-12">
           {/* Vertical divider (desktop) */}
           <div
-            className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-gray-200"
+            className="hidden md:block absolute left-1/2 top-8 bottom-8 w-px bg-gray-200"
             aria-hidden="true"
           />
           {/* Left: Social logins */}
@@ -88,7 +88,7 @@ const LoginPage = () => {
             <button
               type="button"
               onClick={onGoogleLogin}
-              className="w-3/4 inline-flex items-center gap-3 border border-gray-200 rounded-lg px-4 py-3 text-gray-800 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              className="w-full inline-flex items-center justify-center gap-3 border-2 border-gray-200 rounded-xl px-6 py-4 text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all duration-200 shadow-sm hover:shadow-md"
               aria-label="Continue with Google"
             >
               {/* Google icon */}
@@ -117,7 +117,7 @@ const LoginPage = () => {
           </div>
 
           {/* Right: Email/password form */}
-          <form className="space-y-4" onSubmit={onSubmit}>
+          <form className="space-y-5" onSubmit={onSubmit}>
             <label className="block">
               <span className="sr-only">Email</span>
               <input
@@ -126,7 +126,7 @@ const LoginPage = () => {
                 placeholder="Email"
                 value={form.email}
                 onChange={onChange}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                className="w-full border-2 border-gray-200 rounded-xl px-5 py-4 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all duration-200"
                 required
               />
             </label>
@@ -139,22 +139,22 @@ const LoginPage = () => {
                 placeholder="Password"
                 value={form.password}
                 onChange={onChange}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                className="w-full border-2 border-gray-200 rounded-xl px-5 py-4 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all duration-200"
                 required
               />
             </label>
 
-            {error && <p className="text-red-600 text-sm">{error}</p>}
+            {error && <p className="text-red-600 text-sm font-medium bg-red-50 px-4 py-3 rounded-lg">{error}</p>}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium rounded-lg py-3 transition-colors"
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-semibold rounded-xl py-4 transition-all duration-200 shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40"
             >
               {loading ? "Logging in..." : "Log in"}
             </button>
 
-            <div className="text-center">
-              <a href="#" className="text-sm text-gray-600 hover:underline">
+            <div className="text-center pt-2">
+              <a href="#" className="text-sm text-gray-600 hover:text-blue-600 hover:underline transition-colors">
                 Forgot password?
               </a>
             </div>

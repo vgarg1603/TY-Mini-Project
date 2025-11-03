@@ -12,13 +12,13 @@ const Stat = ({ value, label, accent = false }) => (
   <div className="text-center">
     <div
       className={
-        "text-6xl sm:text-5xl font-semibold tracking-tight " +
+        "text-5xl sm:text-6xl font-bold tracking-tight " +
         (accent ? "text-blue-600" : "text-slate-900")
       }
     >
       {value}
     </div>
-    <div className="mt-2 text-slate-500 text-8xl sm:text-base">{label}</div>
+    <div className="mt-3 text-slate-600 text-sm sm:text-base font-medium uppercase tracking-wide">{label}</div>
   </div>
 );
 
@@ -64,14 +64,14 @@ const CompanyCard = ({
 );
 
 const FAQItem = ({ q, a, isOpen, onClick }) => (
-  <div className="border-b border-slate-200">
+  <div className="border-b border-slate-200 last:border-b-0">
     <button
-      className="w-full flex items-center justify-between py-4 text-left"
+      className="w-full flex items-center justify-between py-5 px-6 text-left hover:bg-slate-50 transition-colors duration-150"
       onClick={onClick}
     >
-      <span className="text-slate-900 font-medium">{q}</span>
+      <span className="text-slate-900 font-semibold text-base pr-4">{q}</span>
       <svg
-        className={`w-5 h-5 text-slate-500 transition-transform ${
+        className={`w-5 h-5 text-slate-500 transition-transform duration-200 flex-shrink-0 ${
           isOpen ? "rotate-180" : ""
         }`}
         fill="none"
@@ -87,7 +87,7 @@ const FAQItem = ({ q, a, isOpen, onClick }) => (
         ></path>
       </svg>
     </button>
-    {isOpen && <p className="pb-4 text-slate-600 text-sm leading-6">{a}</p>}
+    {isOpen && <p className="pb-6 px-6 text-slate-600 text-sm leading-7">{a}</p>}
   </div>
 );
 
@@ -154,12 +154,12 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen ">
       {/* Hero */}
-      <section className="relative bg-landing-hero">
-        <div className="max-w-7xl mx-auto ">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-start pb-16 sm:pb-20">
+      <section className="relative bg-landing-hero overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-20 items-center pb-20 sm:pb-24">
             {/* Left copy */}
-            <div className="font-sans font-light pt-16 sm:pt-20">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl tracking-tight text-slate-900">
+            <div className="font-sans font-light pt-20 sm:pt-24">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl tracking-tight text-slate-900 leading-tight">
                 Invest in{" "}
                 <span className="bg-gradient-to-r from-[#68BBF1] to-[#88AEF0] bg-clip-text text-transparent">
                   founders
@@ -169,21 +169,21 @@ const LandingPage = () => {
                   building the future
                 </span>
               </h1>
-              <p className="mt-6 text-slate-600 text-base sm:text-lg leading-7 max-w-xl">
+              <p className="mt-8 text-slate-600 text-lg sm:text-xl leading-relaxed max-w-xl">
                 Get equity and front row seats to the startups and small
                 businesses you love—for as little as ₹100.
               </p>
 
-              <div className="mt-8 flex items-center gap-4">
+              <div className="mt-10 flex items-center gap-4 flex-wrap">
                 <a
                   href="/signup"
-                  className="inline-flex items-center justify-center rounded-md bg-blue-600 px-5 py-3 text-white font-medium shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-8 py-4 text-white font-semibold shadow-lg shadow-blue-600/30 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
                 >
                   Join VentureX
                 </a>
                 <a
                   href="/explore"
-                  className="inline-flex items-center justify-center rounded-md px-5 py-3 border border-slate-200 bg-white text-slate-700 font-medium hover:bg-slate-50"
+                  className="inline-flex items-center justify-center rounded-xl px-8 py-4 border-2 border-slate-300 bg-white text-slate-700 font-semibold hover:bg-slate-50 hover:border-slate-400 transition-all duration-200"
                 >
                   Explore Startups
                 </a>
@@ -197,23 +197,23 @@ const LandingPage = () => {
       </section>
 
       {/* Stats + chips */}
-      <section className="bg-slate-50 py-14 sm:py-16 text-5xl bg-landing-subHero">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm tracking-widest text-slate-500 font-medium">
-            JOIN OVER 1 MILLION INVESTORS
+      <section className="bg-slate-50 py-16 sm:py-20 text-5xl bg-landing-subHero">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-10">
+          <p className="text-center text-xs tracking-[0.2em] text-slate-500 font-semibold uppercase">
+            Join Over 1 Million Investors
           </p>
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-10">
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-12">
             <Stat value="$250" label="median investment" />
             <Stat value="3,774" label="founders funded" />
             <Stat value="$965M" label="raised on VentureX" accent />
           </div>
 
           {/* Chips */}
-          <div className="mt-10 flex flex-wrap gap-3 justify-center">
+          <div className="mt-16 flex flex-wrap gap-3 justify-center max-w-4xl mx-auto">
             {ideaChips.map((chip, i) => (
               <span
                 key={i}
-                className="px-4 py-2 rounded-full bg-white border border-slate-200 text-slate-700 text-sm shadow-sm"
+                className="px-5 py-2.5 rounded-full bg-white border border-slate-200 text-slate-700 text-sm shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-200"
               >
                 {chip}
               </span>
@@ -223,12 +223,12 @@ const LandingPage = () => {
       </section>
 
       {/* FAQs */}
-      <section className="py-16 sm:py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-center text-3xl sm:text-4xl font-semibold text-slate-900">
+      <section className="py-20 sm:py-24">
+        <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-10">
+          <h2 className="text-center text-4xl sm:text-5xl font-semibold text-slate-900 tracking-tight">
             Frequently Asked Questions
           </h2>
-          <div className="mt-10 divide-y divide-slate-200 border-y">
+          <div className="mt-12 divide-y divide-slate-200 border-y border-slate-200 bg-white rounded-xl shadow-sm">
             {faqs.map((f, i) => (
               <FAQItem
                 key={i}
@@ -240,10 +240,10 @@ const LandingPage = () => {
             ))}
           </div>
 
-          <div className="mt-10 flex justify-center">
+          <div className="mt-12 flex justify-center">
             <a
               href="#"
-              className="inline-flex items-center gap-2 rounded-md bg-slate-900 text-white px-6 py-3 text-sm font-medium hover:bg-slate-800"
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 text-white px-8 py-4 text-sm font-semibold hover:bg-slate-800 shadow-lg hover:shadow-xl transition-all duration-200"
             >
               More Investor FAQs
               <span aria-hidden>→</span>
