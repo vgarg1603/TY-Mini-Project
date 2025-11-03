@@ -19,7 +19,6 @@ const RaiseMoneyEditor = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("Editor");
   const [initialDescription, setInitialDescription] = useState("<p></p>");
   const [saving, setSaving] = useState(false);
@@ -95,82 +94,40 @@ const RaiseMoneyEditor = () => {
     await performSave();
   };
 
-  const toggleSidebar = () => setIsSidebarOpen((o) => !o);
-
   const log = () => {
     if (editorRef.current) console.log(editorRef.current.getContent());
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 relative font-sans">
-      {/* Hamburger */}
-      <button
-        onClick={toggleSidebar}
-        className="fixed left-4 z-50 p-2 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow"
-        aria-label="Toggle menu"
-        style={{ top: NAVBAR_HEIGHT + 8 }}
-      >
-        <div className="w-6 h-6 flex flex-col justify-center items-center">
-          <span
-            className={`bg-gray-800 block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${
-              isSidebarOpen ? "rotate-45 translate-y-1" : "-translate-y-0.5"
-            }`}
-          ></span>
-          <span
-            className={`bg-gray-800 block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm my-0.5 ${
-              isSidebarOpen ? "opacity-0" : "opacity-100"
-            }`}
-          ></span>
-          <span
-            className={`bg-gray-800 block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${
-              isSidebarOpen ? "-rotate-45 -translate-y-1" : "translate-y-0.5"
-            }`}
-          ></span>
-        </div>
-      </button>
-
-      {isSidebarOpen && (
-        <div
-          className="fixed left-0 right-0 bottom-0 bg-opacity-50 z-30"
-          style={{ top: NAVBAR_HEIGHT }}
-          onClick={toggleSidebar}
-        ></div>
-      )}
-
-      {/* Sidebar */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-50 relative font-sans">
+      {/* Sidebar - Always Open */}
       <div
-        className={`fixed left-0 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out z-40 ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className="fixed left-0 w-80 bg-white shadow-2xl z-40 border-r-2 border-gray-100"
         style={{
           top: NAVBAR_HEIGHT,
           height: `calc(100vh - ${NAVBAR_HEIGHT}px)`,
         }}
       >
-        <div className="p-6 relative h-full">
-          <div className="my-8 pb-4 border-b border-gray-200 flex items-start justify-between gap-3">
+        <div className="p-6 relative h-full overflow-y-auto">
+          {/* Header: Startup Name */}
+          <div className="mb-8 pb-6 border-b-2 border-gray-200">
             <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-gray-800 capitalize truncate">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent capitalize truncate">
                 {startupDisplayName}
               </h1>
-              <p className="text-sm text-gray-500 mt-1">Campaign Editor</p>
+              <p className="text-sm text-gray-600 mt-2 font-medium">Campaign Dashboard</p>
             </div>
-            <button
-              aria-label="Close menu"
-              className="shrink-0 text-2xl text-gray-500 hover:text-gray-700 -mt-1"
-              onClick={toggleSidebar}
-            >
-              ×
-            </button>
           </div>
-          <nav className="space-y-2">
-            {menuOptions.map((item) => (
+
+          {/* Menu Items */}
+          <nav className="space-y-1.5">
+            {menuOptions.map((item, index) => (
               <button
-                key={item.name}
-                className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors duration-200 group ${
+                key={index}
+                className={`w-full flex items-center px-4 py-3.5 text-left rounded-xl transition-all duration-200 group ${
                   activeItem === item.name
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm border-2 border-blue-200"
+                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 border-2 border-transparent"
                 }`}
                 onClick={() => {
                   setActiveItem(item.name);
@@ -183,27 +140,48 @@ const RaiseMoneyEditor = () => {
                           .replace(/[^a-z0-9]+/g, "-")
                       );
                     navigate(item.path(slug));
+                  } else {
+                    console.log(
+                      `Navigating to ${item.name} (not yet implemented)`
+                    );
                   }
                 }}
               >
-                <span className="font-medium">{item.name}</span>
+                <span className={`text-xl mr-3 transition-transform duration-200 ${
+                  activeItem === item.name ? "scale-110" : "group-hover:scale-110"
+                }`}>
+                  {item.icon}
+                </span>
+                <span className="font-semibold">{item.name}</span>
+                {activeItem === item.name && (
+                  <svg className="w-5 h-5 ml-auto text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"/>
+                  </svg>
+                )}
               </button>
             ))}
           </nav>
         </div>
       </div>
 
-      {/* Main content */}
-      <div
-        className={`transition-all duration-300 ${
-          isSidebarOpen ? "ml-80" : "ml-0"
-        } p-8`}
-      >
+      {/* Main content - Always has left margin */}
+      <div className="ml-80 p-6 sm:p-10">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-white rounded-lg shadow-sm p-8 min-h-[50vh]">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              Editor
-            </h2>
+          <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-8 sm:p-10 min-h-[50vh]">
+            {/* Page Header */}
+            <div className="mb-8 pb-6 border-b-2 border-gray-200">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900">
+                  Company Description
+                </h2>
+              </div>
+              <p className="text-gray-600 ml-13">Write and edit your company's detailed description</p>
+            </div>
             <Editor
               apiKey={import.meta.env.VITE_TINYMCE_API_KEY}
               onInit={(_evt, editor) => (editorRef.current = editor)}
@@ -268,33 +246,69 @@ const RaiseMoneyEditor = () => {
                 },
               }}
             />
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-slate-500">
-              {saving ? (
-                <span className="flex items-center gap-1">
-                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-                  Saving...
-                </span>
-              ) : lastSavedAt ? (
-                <span>Saved {lastSavedAt.toLocaleTimeString()}</span>
-              ) : (
-                <span>Loaded</span>
-              )}
-              {saveError && <span className="text-red-500">{saveError}</span>}
-              <button
-                onClick={handleManualSave}
-                disabled={saving}
-                className={`px-2 py-1 rounded ${
-                  saving ? "bg-slate-300" : "bg-blue-600 hover:bg-blue-700"
-                } text-white`}
-              >
-                Save Now
-              </button>
-              <button
-                onClick={log}
-                className="px-2 py-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-700"
-              >
-                Log HTML
-              </button>
+            <div className="mt-6 pt-6 border-t-2 border-gray-200">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <button
+                  onClick={handleManualSave}
+                  disabled={saving}
+                  className={`px-8 py-4 rounded-xl text-white font-bold text-lg shadow-lg transition-all duration-200 flex items-center gap-2 ${
+                    saving
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl hover:scale-105"
+                  }`}
+                >
+                  {saving ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Save Now
+                    </>
+                  )}
+                </button>
+                
+                {/* Status Messages */}
+                <div className="flex-1 flex items-center gap-4">
+                  {saving ? (
+                    <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-blue-50 text-blue-700 border-2 border-blue-200">
+                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span className="font-medium">Saving...</span>
+                    </div>
+                  ) : lastSavedAt ? (
+                    <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-green-50 text-green-700 border-2 border-green-200">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                      </svg>
+                      <span className="font-medium">Saved at {lastSavedAt.toLocaleTimeString()}</span>
+                    </div>
+                  ) : null}
+                  {saveError && (
+                    <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 text-red-700 border-2 border-red-200">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                      </svg>
+                      <span className="font-medium">{saveError}</span>
+                    </div>
+                  )}
+                  <button
+                    onClick={log}
+                    className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-colors"
+                  >
+                    Log HTML
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -371,8 +371,11 @@ export default function CompanyPage() {
               <div className="text-4xl font-bold text-blue-600">
                 ₹{totalRaised.toLocaleString("en-IN")}
               </div>
+              {/* <div className="text-sm text-gray-700 mt-2 font-medium">
+                raised from <span className="font-bold text-slate-900">{investments.length}</span> investments
+              </div> */}
               <div className="text-sm text-gray-700 mt-2 font-medium">
-                raised from <span className="font-bold text-slate-900">{investments.length}+</span> investors
+                raised from investments
               </div>
             </div>
 
