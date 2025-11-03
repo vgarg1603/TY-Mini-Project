@@ -419,6 +419,74 @@ export default function CompanyPage() {
                 </li>
               </ul>
             </div>
+
+            {/* Your Investment Section */}
+            {user && userInvestment > 0 && (
+              <div className="border-2 border-green-100 rounded-2xl p-6 bg-gradient-to-br from-green-50 to-white shadow-lg">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                  </svg>
+                  <div className="font-bold text-lg text-slate-900">Your Investment</div>
+                </div>
+                <div className="text-3xl font-bold text-green-600 mb-1">
+                  ₹{userInvestment.toLocaleString("en-IN")}
+                </div>
+                <div className="text-sm text-gray-600">
+                  You've invested in this company
+                </div>
+              </div>
+            )}
+
+            {/* Top Investors Section */}
+            {topInvestors.length > 0 && (
+              <div className="border-2 border-gray-200 rounded-2xl p-6 bg-white shadow-lg">
+                <div className="font-bold text-lg mb-4 text-slate-900 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                  </svg>
+                  Top Investors
+                </div>
+                <div className="space-y-3">
+                  {topInvestors.map((investor, idx) => (
+                    <div 
+                      key={investor.id}
+                      className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                          idx === 0 ? 'bg-gradient-to-br from-amber-400 to-amber-600' :
+                          idx === 1 ? 'bg-gradient-to-br from-gray-400 to-gray-600' :
+                          idx === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-600' :
+                          'bg-gradient-to-br from-blue-400 to-blue-600'
+                        }`}>
+                          {idx + 1}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold text-slate-900 truncate">
+                            {investor.email ? 
+                              investor.email.split('@')[0] + '@...' : 
+                              'Anonymous'
+                            }
+                          </div>
+                          {user && (investor.id === user.id || investor.email === user.email) && (
+                            <div className="text-xs text-green-600 font-medium">You</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-sm font-bold text-slate-900 ml-2">
+                        ₹{investor.amount.toLocaleString("en-IN")}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {investments.length > 5 && (
+                  <div className="mt-4 text-center text-xs text-gray-500">
+                    +{investments.length - 5} more investors
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
