@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import { createInvestment, getCompany, getInvestments } from "../lib/api";
+import { useParams, useNavigate } from "react-router-dom";
+import { createInvestment, getCompany, getInvestments, createChatChannel } from "../lib/api";
 import { useAuth } from "../lib/AuthContext";
+import { useStreamChat } from "../lib/StreamChatContext";
 
 function MediaCarousel({ photo, video, overlayTitle, overlaySubtitle }) {
   const [index, setIndex] = useState(0); // 0=photo, 1=video
@@ -87,12 +88,15 @@ function MediaCarousel({ photo, video, overlayTitle, overlaySubtitle }) {
 export default function CompanyPage() {
   const { companyName } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { chatClient } = useStreamChat();
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [investments, setInvestments] = useState([]);
   const [amount, setAmount] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
+  const [isCreatingChannel, setIsCreatingChannel] = useState(false);
   
   const totalRaised = useMemo(
     () => investments.reduce((sum, it) => sum + (Number(it.amount) || 0), 0),
@@ -172,6 +176,62 @@ export default function CompanyPage() {
       setAmount("");
     } catch {
       /* ignore */
+    }
+  }
+
+  async function handleMessageCompany() {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    // Try to get owner ID or email
+    let companyOwnerId = company?.userSupaId;
+    let companyOwnerEmail = null;
+
+    // If userSupaId is not available, look for founder's email in team
+    if (!companyOwnerId && company?.team && Array.isArray(company.team)) {
+      const founder = company.team.find(member => member.isFounder);
+      if (founder && founder.workEmail) {
+        companyOwnerEmail = founder.workEmail;
+      }
+    }
+
+    // If still no owner info available
+    if (!companyOwnerId && !companyOwnerEmail) {
+      alert("Unable to message this company - owner information not available");
+      return;
+    }
+
+    // Don't allow messaging yourself
+    if (companyOwnerId && user.id === companyOwnerId) {
+      alert("You cannot message your own company");
+      return;
+    }
+
+    // Also check if user's email matches the founder's email
+    if (companyOwnerEmail && user.email === companyOwnerEmail) {
+      alert("You cannot message your own company");
+      return;
+    }
+
+    setIsCreatingChannel(true);
+    try {
+      const { channelId, channelType } = await createChatChannel({
+        userId: user.id,
+        companyOwnerId: companyOwnerId,
+        companyOwnerEmail: companyOwnerEmail,
+        companyName: company.companyName,
+      });
+
+      // Navigate to chat page with the channel
+      navigate(`/chat?channelId=${channelId}&channelType=${channelType}`);
+    } catch (error) {
+      console.error("Error creating chat:", error);
+      const errorMessage = error?.message || "Failed to start chat. Please try again.";
+      alert(errorMessage);
+    } finally {
+      setIsCreatingChannel(false);
     }
   }
 
@@ -378,6 +438,30 @@ export default function CompanyPage() {
                 raised from investments
               </div>
             </div>
+
+            {/* Message Company Button */}
+            {user && chatClient && (() => {
+              // Check if we have owner info available (either userSupaId or founder email)
+              const hasOwnerInfo = company?.userSupaId || 
+                (company?.team && company.team.some(m => m.isFounder && m.workEmail));
+              
+              // Check if user is the owner
+              const isOwner = (company?.userSupaId && user.id === company.userSupaId) ||
+                (company?.team && company.team.some(m => m.isFounder && m.workEmail === user.email));
+              
+              return hasOwnerInfo && !isOwner;
+            })() && (
+              <button
+                onClick={handleMessageCompany}
+                disabled={isCreatingChannel}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl py-4 font-bold text-lg shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                {isCreatingChannel ? "Opening Chat..." : "Message Company"}
+              </button>
+            )}
 
             <div className="border-2 border-gray-200 rounded-2xl p-6 bg-white shadow-lg">
               <div className="text-xs font-bold tracking-wider uppercase text-gray-500 mb-4">Investment Amount</div>

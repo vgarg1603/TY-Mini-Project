@@ -271,3 +271,54 @@ export async function toggleWatchlist({
   const { data } = await api.post("/api/watchlist/toggle", payload);
   return data; // { saved }
 }
+
+// Chat APIs
+export async function getChatToken({ userId, userName, userEmail }) {
+  if (!userId) throw new Error("userId is required");
+  try {
+    const { data } = await api.post("/api/chat/token", {
+      userId,
+      userName,
+      userEmail,
+    });
+    return data; // { token, userId }
+  } catch (err) {
+    const message =
+      err?.response?.data?.error || err?.message || "Failed to get chat token";
+    throw new Error(message);
+  }
+}
+
+export async function createChatChannel({ userId, companyOwnerId, companyOwnerEmail, companyName }) {
+  if (!userId) {
+    throw new Error("userId is required");
+  }
+  if (!companyOwnerId && !companyOwnerEmail) {
+    throw new Error("Either companyOwnerId or companyOwnerEmail is required");
+  }
+  try {
+    const { data } = await api.post("/api/chat/channel", {
+      userId,
+      companyOwnerId,
+      companyOwnerEmail,
+      companyName,
+    });
+    return data; // { channelId, channelType, members }
+  } catch (err) {
+    const message =
+      err?.response?.data?.error || err?.message || "Failed to create chat channel";
+    throw new Error(message);
+  }
+}
+
+export async function getUserChannels(userId) {
+  if (!userId) throw new Error("userId is required");
+  try {
+    const { data } = await api.get(`/api/chat/channels/${userId}`);
+    return data?.channels || [];
+  } catch (err) {
+    const message =
+      err?.response?.data?.error || err?.message || "Failed to get channels";
+    throw new Error(message);
+  }
+}

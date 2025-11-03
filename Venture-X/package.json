@@ -17,6 +17,8 @@
     "react": "^19.1.1",
     "react-router-dom": "^7.9.3",
     "react-toastify": "^11.0.5",
+    "stream-chat": "^9.25.0",
+    "stream-chat-react": "^13.10.2",
     "tailwindcss": "^4.1.13",
     "tinymce": "^8.1.2"
   },

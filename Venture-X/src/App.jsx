@@ -23,6 +23,7 @@ import CompanyPage from "./Pages/CompanyPage.jsx";
 import RaiseMoneyEditor from "./Pages/RaiseMoney/RaiseMoneyEditor.jsx";
 import RaiseMoneyRound from "./Pages/RaiseMoney/RaiseMoneyRound.jsx";
 import RaiseMoneyTeam from "./Pages/RaiseMoney/RaiseMoneyTeam.jsx";
+import ChatPage from "./Pages/ChatPage.jsx";
 
 function App() {
   const router = createBrowserRouter([
@@ -167,6 +168,17 @@ function App() {
         <>
           <Navbar />
           <CompanyPage />
+        </>
+      ),
+    },
+    {
+      path: "/chat",
+      element: (
+        <>
+          <ProtectedRoute>
+            <Navbar />
+            <ChatPage />
+          </ProtectedRoute>
         </>
       ),
     },
