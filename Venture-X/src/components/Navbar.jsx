@@ -264,7 +264,7 @@ const Navbar = () => {
                 <MenuItem label="Watchlist" href="#" icon={<IconHeart />} />
                 <MenuItem
                   label="Tax Documents"
-                  href="#"
+                  href="/tax-documents"
                   icon={<IconDocument />}
                 />
                 <MenuItem label="Account" href="#" icon={<IconGear />} />
