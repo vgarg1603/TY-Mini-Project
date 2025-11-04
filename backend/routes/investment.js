@@ -64,4 +64,34 @@ router.get("/list", async (req, res) => {
   }
 });
 
+// GET /api/investment/portfolio?investorSupaId=...&investorEmail=...
+// Get investments made by a specific investor (their portfolio)
+router.get("/portfolio", async (req, res) => {
+  try {
+    const { investorSupaId, investorEmail, limit = 50 } = req.query || {};
+
+    if (!investorSupaId && !investorEmail) {
+      return res.status(400).json({ error: "investorSupaId or investorEmail is required" });
+    }
+
+    // Build query to find investments by this investor
+    const query = {};
+    if (investorSupaId) {
+      query.investorSupaId = investorSupaId;
+    } else if (investorEmail) {
+      query.investorEmail = investorEmail;
+    }
+
+    const items = await Investment.find(query)
+      .populate("company", "companyName startupName companyLogo companyOneLiner location industries")
+      .sort({ createdAt: -1 })
+      .limit(Number(limit));
+
+    return res.json({ investments: items });
+  } catch (err) {
+    console.error("investment.portfolio error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;

@@ -192,6 +192,21 @@ export async function createInvestment({
   return data?.investment || null;
 }
 
+// Get investments made by a user (portfolio)
+export async function getUserPortfolio({ investorSupaId, investorEmail, limit = 50 }) {
+  const params = {};
+  if (investorSupaId) params.investorSupaId = investorSupaId;
+  if (investorEmail) params.investorEmail = investorEmail;
+  params.limit = limit;
+
+  if (!params.investorSupaId && !params.investorEmail) {
+    throw new Error("investorSupaId or investorEmail is required");
+  }
+
+  const { data } = await api.get("/api/investment/portfolio", { params });
+  return data?.investments || [];
+}
+
 // Save team array
 export async function saveTeam({ userSupaId, team }) {
   if (!userSupaId) throw new Error("userSupaId is required");

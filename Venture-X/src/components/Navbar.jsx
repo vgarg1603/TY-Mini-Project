@@ -5,6 +5,7 @@ import {
   getWelcomeData,
   getRaiseMoneyRedirect,
   getCompanyStatus,
+  getUserPortfolio,
 } from "../lib/api.js";
 import { supabase } from "../lib/supabaseClient.js";
 
@@ -57,7 +58,11 @@ const Navbar = () => {
       >
         {/* Left: Logo + Explore + Search */}
         <div className="flex items-center gap-8">
-          <Link to="/" className="block transition-transform hover:scale-105" aria-label="Venture X home">
+          <Link
+            to="/"
+            className="block transition-transform hover:scale-105"
+            aria-label="Venture X home"
+          >
             {/* Served from Vite public/ folder */}
             <img
               src="/VentureXLogo.png"
@@ -68,7 +73,10 @@ const Navbar = () => {
 
           <ul className="inline-flex items-center gap-8 m-0 p-0 list-none text-gray-700 text-sm font-medium">
             <li className="hidden sm:block">
-              <Link to="/explore" className="hover:text-blue-600 transition-colors duration-200">
+              <Link
+                to="/explore"
+                className="hover:text-blue-600 transition-colors duration-200"
+              >
                 Explore
               </Link>
             </li>
@@ -184,12 +192,18 @@ const Navbar = () => {
           {!user && (
             <ul className="flex items-center gap-4 m-0 p-0 list-none text-sm font-medium">
               <li>
-                <Link to="/login" className="text-gray-700 hover:text-blue-600 transition-colors duration-200">
+                <Link
+                  to="/login"
+                  className="text-gray-700 hover:text-blue-600 transition-colors duration-200"
+                >
                   Log in
                 </Link>
               </li>
               <li>
-                <Link to="/signup" className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg">
+                <Link
+                  to="/signup"
+                  className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg"
+                >
                   Sign up
                 </Link>
               </li>
@@ -243,7 +257,10 @@ const Navbar = () => {
                 {user && (
                   <MyCompanyMenuItem user={user} isMenuOpen={menuOpen} />
                 )}
-                <MenuItem label="Portfolio" href="#" icon={<IconPieChart />} />
+                {/* Portfolio: only show if user has investments */}
+                {user && (
+                  <PortfolioMenuItem user={user} isMenuOpen={menuOpen} />
+                )}
                 <MenuItem label="Watchlist" href="#" icon={<IconHeart />} />
                 <MenuItem
                   label="Tax Documents"
@@ -265,9 +282,7 @@ const Navbar = () => {
                   }}
                 >
                   <IconLogout />
-                  <span>
-                    Logout
-                  </span>
+                  <span>Logout</span>
                 </button>
               </div>
             </div>
@@ -296,9 +311,7 @@ const MenuItem = ({ label, href = "#", icon = null, avatarUrl = "" }) => (
         {icon}
       </span>
     )}
-    <span className="truncate">
-      {label}
-    </span>
+    <span className="truncate">{label}</span>
   </a>
 );
 
@@ -481,9 +494,53 @@ function MyCompanyMenuItem({ user, isMenuOpen }) {
       <span className="text-gray-500" aria-hidden="true">
         <IconBriefcase />
       </span>
-      <span className="truncate">
-        My Company
+      <span className="truncate">My Company</span>
+    </button>
+  );
+}
+
+// Portfolio dynamic menu entry - only show if user has investments
+function PortfolioMenuItem({ user, isMenuOpen }) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const supabaseId = user?.id || user?.user_metadata?.sub;
+        if (!supabaseId && !user?.email) return;
+
+        const portfolio = await getUserPortfolio({
+          investorSupaId: supabaseId,
+          investorEmail: user?.email,
+          limit: 1,
+        });
+
+        const hasInvestments = portfolio && portfolio.length > 0;
+        if (!cancelled) setVisible(hasInvestments);
+      } catch {
+        if (!cancelled) setVisible(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.user_metadata?.sub, user?.email, isMenuOpen]);
+
+  if (!visible) return null;
+  return (
+    <button
+      role="menuitem"
+      className="w-full text-left px-4 py-3 rounded-xl hover:bg-blue-50 text-sm text-gray-800 font-medium flex items-center gap-3 transition-all duration-150 hover:text-blue-600"
+      onClick={() => {
+        // For now, just show an alert. You can implement a portfolio page later
+        alert("Portfolio page coming soon!");
+      }}
+    >
+      <span className="text-gray-500" aria-hidden="true">
+        <IconPieChart />
       </span>
+      <span className="truncate">Portfolio</span>
     </button>
   );
 }
