@@ -31,11 +31,26 @@ router.get("/list", async (req, res) => {
         .status(400)
         .json({ error: "valid user identifier is required" });
 
-    const items = await Watchlist.find({ user_id: userId }, { company_id: 1 })
+    const items = await Watchlist.find({ user_id: userId })
+      .populate({
+        path: "company_id",
+        select:
+          "companyName companyOneLiner industries companyLogo mainCoverPhoto mainCoverVideo startupName location team",
+      })
       .sort({ createdAt: -1 })
       .lean();
-    const companyIds = items.map((i) => String(i.company_id));
-    return res.json({ items, companyIds });
+
+    const companyIds = items.map((i) =>
+      String(i.company_id._id || i.company_id)
+    );
+    const companies = items
+      .filter((i) => i.company_id && typeof i.company_id === "object")
+      .map((i) => ({
+        ...i.company_id,
+        _id: i.company_id._id || i.company_id,
+      }));
+
+    return res.json({ items, companyIds, companies });
   } catch (err) {
     console.error("watchlist.list error:", err);
     return res.status(500).json({ error: "Internal server error" });

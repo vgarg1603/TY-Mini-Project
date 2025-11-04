@@ -24,6 +24,8 @@ import RaiseMoneyEditor from "./Pages/RaiseMoney/RaiseMoneyEditor.jsx";
 import RaiseMoneyRound from "./Pages/RaiseMoney/RaiseMoneyRound.jsx";
 import RaiseMoneyTeam from "./Pages/RaiseMoney/RaiseMoneyTeam.jsx";
 import ChatPage from "./Pages/ChatPage.jsx";
+import TaxDocumentsPage from "./Pages/TaxDocumentsPage.jsx";
+import WatchlistPage from "./Pages/WatchlistPage.jsx";
 
 function App() {
   const router = createBrowserRouter([
@@ -84,6 +86,17 @@ function App() {
         <>
           <Navbar />
           <ExplorePage />
+        </>
+      ),
+    },
+    {
+      path: "/watchlist",
+      element: (
+        <>
+          <ProtectedRoute>
+            <Navbar />
+            <WatchlistPage />
+          </ProtectedRoute>
         </>
       ),
     },
@@ -178,6 +191,17 @@ function App() {
           <ProtectedRoute>
             <Navbar />
             <ChatPage />
+          </ProtectedRoute>
+        </>
+      ),
+    },
+    {
+      path: "/tax-documents",
+      element: (
+        <>
+          <ProtectedRoute>
+            <Navbar />
+            <TaxDocumentsPage />
           </ProtectedRoute>
         </>
       ),

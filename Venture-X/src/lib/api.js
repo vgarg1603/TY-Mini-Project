@@ -254,7 +254,7 @@ export async function getWatchlist({ user_id, supabaseId, email } = {}) {
   if (supabaseId) params.supabaseId = supabaseId;
   if (email) params.email = email;
   const { data } = await api.get("/api/watchlist/list", { params });
-  return data; // { items, companyIds }
+  return data; // { items, companyIds, companies }
 }
 
 export async function toggleWatchlist({
@@ -289,7 +289,12 @@ export async function getChatToken({ userId, userName, userEmail }) {
   }
 }
 
-export async function createChatChannel({ userId, companyOwnerId, companyOwnerEmail, companyName }) {
+export async function createChatChannel({
+  userId,
+  companyOwnerId,
+  companyOwnerEmail,
+  companyName,
+}) {
   if (!userId) {
     throw new Error("userId is required");
   }
@@ -306,7 +311,9 @@ export async function createChatChannel({ userId, companyOwnerId, companyOwnerEm
     return data; // { channelId, channelType, members }
   } catch (err) {
     const message =
-      err?.response?.data?.error || err?.message || "Failed to create chat channel";
+      err?.response?.data?.error ||
+      err?.message ||
+      "Failed to create chat channel";
     throw new Error(message);
   }
 }
