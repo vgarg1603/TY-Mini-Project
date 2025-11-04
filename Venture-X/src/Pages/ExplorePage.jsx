@@ -6,6 +6,7 @@ const ExplorePage = () => {
   const scrollRef = useRef(null);
   const { user } = useAuth();
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [selectedIndustry, setSelectedIndustry] = useState(null);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -40,7 +41,10 @@ const ExplorePage = () => {
     const el = scrollRef.current;
     if (!el) return;
     const canRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+    // Only show left arrow when scrolled significantly past the leftmost element
+    const canLeft = el.scrollLeft > 10; // Small threshold to account for rounding
     setCanScrollRight(canRight);
+    setCanScrollLeft(canLeft);
   };
 
   useEffect(() => {
@@ -109,6 +113,13 @@ const ExplorePage = () => {
     if (!el) return;
     const amount = Math.floor(el.clientWidth * 0.8);
     el.scrollBy({ left: amount, behavior: "smooth" });
+  };
+
+  const scrollLeft = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const amount = Math.floor(el.clientWidth * 0.8);
+    el.scrollBy({ left: -amount, behavior: "smooth" });
   };
 
   async function onToggleWatch(c) {
@@ -238,7 +249,10 @@ const ExplorePage = () => {
         {/* Body */}
         <div className="p-4">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="font-bold text-lg truncate text-slate-900" title={c.companyName}>
+            <h3
+              className="font-bold text-lg truncate text-slate-900"
+              title={c.companyName}
+            >
               {c.companyName}
             </h3>
           </div>
@@ -270,7 +284,9 @@ const ExplorePage = () => {
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-8">
           <div className="flex items-center gap-3">
             <div className="h-1 w-12 bg-blue-500 rounded-full"></div>
-            <h2 className="text-sm font-semibold tracking-wider uppercase text-blue-600">Founders</h2>
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-blue-600">
+              Founders
+            </h2>
           </div>
         </div>
       </div>
@@ -281,9 +297,26 @@ const ExplorePage = () => {
 
         {/* Industries scroller */}
         <div className="relative mt-10">
+          {canScrollLeft && (
+            <button
+              type="button"
+              onClick={scrollLeft}
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-white border-2 border-gray-300 shadow-lg rounded-full p-3 hover:bg-gray-50 hover:border-blue-500 hover:shadow-xl transition-all duration-200 z-10"
+              aria-label="Scroll left"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="w-5 h-5 text-gray-700"
+              >
+                <path d="M14.71 6.71a1 1 0 00-1.42 0l-4 4a1 1 0 000 1.42l4 4a1 1 0 101.42-1.42L11.41 12l3.3-3.88a1 1 0 000-1.41z" />
+              </svg>
+            </button>
+          )}
           <div
             ref={scrollRef}
-            className="flex gap-8 overflow-x-hidden pb-6 pr-12"
+            className="flex gap-8 overflow-x-hidden pb-6 pr-12 pl-12"
           >
             {/* Add an "All" filter */}
             <button
@@ -333,7 +366,7 @@ const ExplorePage = () => {
             <button
               type="button"
               onClick={scrollRight}
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-white border-2 border-gray-300 shadow-lg rounded-full p-3 hover:bg-gray-50 hover:border-blue-500 hover:shadow-xl transition-all duration-200"
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-white border-2 border-gray-300 shadow-lg rounded-full p-3 hover:bg-gray-50 hover:border-blue-500 hover:shadow-xl transition-all duration-200 z-10"
               aria-label="Scroll right"
             >
               <svg
@@ -351,11 +384,24 @@ const ExplorePage = () => {
         <div className="my-12">
           <div className="flex items-baseline justify-between mb-2">
             <h2 className="text-3xl font-semibold text-slate-900">
-              Raising Now{selectedIndustry ? <span className="text-blue-600"> · {selectedIndustry}</span> : ""}
+              Raising Now
+              {selectedIndustry ? (
+                <span className="text-blue-600"> · {selectedIndustry}</span>
+              ) : (
+                ""
+              )}
             </h2>
-            {loading && <span className="text-sm text-gray-500 animate-pulse">Loading…</span>}
+            {loading && (
+              <span className="text-sm text-gray-500 animate-pulse">
+                Loading…
+              </span>
+            )}
           </div>
-          {error && <div className="mt-4 text-sm text-red-600 bg-red-50 px-4 py-3 rounded-lg font-medium">{error}</div>}
+          {error && (
+            <div className="mt-4 text-sm text-red-600 bg-red-50 px-4 py-3 rounded-lg font-medium">
+              {error}
+            </div>
+          )}
           {!loading && !error && (
             <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {companies.map((c) => (
@@ -366,11 +412,24 @@ const ExplorePage = () => {
               ))}
               {!companies.length && (
                 <div className="col-span-full text-center py-16 text-gray-500">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-16 w-16 mx-auto mb-4 text-gray-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
                   </svg>
                   <p className="text-lg font-medium">No companies found</p>
-                  <p className="text-sm mt-1">Try selecting a different industry</p>
+                  <p className="text-sm mt-1">
+                    Try selecting a different industry
+                  </p>
                 </div>
               )}
             </div>
